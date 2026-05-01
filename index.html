@@ -25,6 +25,8 @@
     table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 15px; min-width: 800px; }
     th { background: #f1f8ff; padding: 10px; text-align: left; border-bottom: 2px solid #ddd; }
     td { padding: 10px; border-bottom: 1px solid #eee; }
+    .footer { text-align: center; margin-top: 30px; padding: 15px; border-top: 1px solid #eee; color: #777; font-size: 13px; line-height: 1.6; }
+    .device-note { color: #d32f2f; font-size: 12px; font-weight: bold; text-align: center; margin-bottom: 10px; }
   </style>
 </head>
 <body>
@@ -34,6 +36,8 @@
 
   <div id="userView">
     <h3>📍 CẬP NHẬT VỊ TRÍ NHÀ Ở</h3>
+    <p class="device-note">⚠️ LƯU Ý: Vui lòng sử dụng ĐIỆN THOẠI và đứng TẠI NHÀ để lấy vị trí chính xác nhất.</p>
+    
     <div class="search-tag">🔍 Gõ tên bạn để tìm nhanh:</div>
     <input type="text" id="userSearch" placeholder="Ví dụ: Nguyễn Văn A..." oninput="filterUserDropdown()">
     
@@ -45,9 +49,11 @@
       <p><b>👤 Thí sinh:</b> <span id="uName"></span> - <b>Lớp:</b> <span id="uLop"></span></p>
       <p><b>🏠 Nơi cư trú:</b> <span id="uDC"></span></p>
     </div>
+    
     <button class="btn-gps" onclick="askLocation()">Bước 2: Lấy vị trí GPS</button>
     <div id="map"></div>
     <button id="sendBtn" class="btn-send" onclick="uploadLocation()" disabled>Bước 3: Xác nhận & Gửi</button>
+    
     <button class="btn-admin-gate" onclick="showLogin()">🔐 QUẢN TRỊ VIÊN</button>
   </div>
 
@@ -77,6 +83,12 @@
       </table>
     </div>
     <button style="background:#666; color:white; margin-top:20px" onclick="location.reload()">Quay lại</button>
+  </div>
+
+  <!-- Phần thông tin sáng lập -->
+  <div class="footer">
+    <p>Dự án: <b>Tiếp Sức Mùa Thi 2026 - THPT Nguyễn Văn Linh</b></p>
+    <p>Người sáng lập hệ thống: <b>Nguyễn Đức Tiền - Lớp 11B2</b></p>
   </div>
 </div>
 
@@ -143,6 +155,9 @@
   }
 
   function askLocation() {
+    if (!navigator.geolocation) {
+        return alert("Trình duyệt của bạn không hỗ trợ định vị!");
+    }
     navigator.geolocation.getCurrentPosition(p => {
       const lat = p.coords.latitude, lng = p.coords.longitude;
       myCoords = lat.toFixed(6) + "," + lng.toFixed(6);
@@ -152,9 +167,14 @@
         L.tileLayer('http://{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}',{subdomains:['mt0','mt1','mt2','mt3']}).addTo(map);
         marker = L.marker([lat, lng], { draggable: true }).addTo(map);
         marker.on('dragend', e => { myCoords = e.target.getLatLng().lat.toFixed(6) + "," + e.target.getLatLng().lng.toFixed(6); });
+      } else {
+        map.setView([lat, lng], 19);
+        marker.setLatLng([lat, lng]);
       }
       if(document.getElementById("userSelect").value !== "") document.getElementById("sendBtn").disabled = false;
-    });
+    }, (error) => {
+        alert("Lỗi định vị: Vui lòng cho phép quyền truy cập GPS trên điện thoại!");
+    }, { enableHighAccuracy: true });
   }
 
   function showLogin() { document.getElementById("userView").style.display = "none"; document.getElementById("loginBox").style.display = "block"; }
@@ -178,9 +198,16 @@
   async function uploadLocation() {
     const s = students[document.getElementById("userSelect").value];
     document.getElementById("sendBtn").innerText = "⏳ Đang gửi...";
-    await fetch(API_URL, { method: "POST", body: JSON.stringify({ ten: s.ten, location: myCoords }) });
-    alert("✅ Cảm ơn bạn " + s.ten + " đã cập nhật vị trí!");
-    location.reload();
+    document.getElementById("sendBtn").disabled = true;
+    try {
+        await fetch(API_URL, { method: "POST", body: JSON.stringify({ ten: s.ten, location: myCoords }) });
+        alert("✅ Cảm ơn bạn " + s.ten + " đã cập nhật vị trí!");
+        location.reload();
+    } catch (e) {
+        alert("Có lỗi xảy ra, vui lòng thử lại!");
+        document.getElementById("sendBtn").innerText = "Bước 3: Xác nhận & Gửi";
+        document.getElementById("sendBtn").disabled = false;
+    }
   }
   window.onload = fetchData;
 </script>
