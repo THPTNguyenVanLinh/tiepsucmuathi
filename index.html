@@ -3,16 +3,16 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Hệ thống Tiếp Sức Mùa Thi 2026</title>
+  <title>Tiếp Sức Mùa Thi 2026 - THPT Nguyễn Văn Linh</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-  
   <style>
     :root { --blue: #0288d1; --bg: #f4f7f9; --green: #2e7d32; }
     body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding: 10px; }
     .container { max-width: 1000px; margin: auto; background: white; padding: 20px; border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); }
     .banner { width: 100%; border-radius: 10px; margin-bottom: 15px; display: block; min-height: 120px; background: #eee; object-fit: cover; }
+    .search-tag { background: #fffde7; border-left: 5px solid #fbc02d; padding: 8px; margin-bottom: 5px; font-size: 13px; font-weight: bold; }
     .tsmt-card { background: #e3f2fd; padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #bbdefb; display: none; }
     h3 { color: var(--blue); text-align: center; margin-top: 0; }
     select, input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px; margin-bottom: 10px; box-sizing: border-box; font-size: 16px; }
@@ -30,14 +30,17 @@
 <body>
 
 <div class="container">
-  <!-- Tự động tìm ảnh theo cả 2 đường dẫn để chắc chắn hiện -->
-  <img src="./TSMT2026.png" alt="Banner TSMT 2026" class="banner" onerror="this.src='https://thptnguyenvanlinh.github.io/TSMT2026.png'">
+  <img src="./TSMT2026.png" alt="Banner TSMT 2026" class="banner" onerror="this.src='https://thptnguyenvanlinh.github.io/THPTNguyenVanLinh/TSMT2026.png'">
 
   <div id="userView">
     <h3>📍 CẬP NHẬT VỊ TRÍ NHÀ Ở</h3>
+    <div class="search-tag">🔍 Gõ tên bạn để tìm nhanh:</div>
+    <input type="text" id="userSearch" placeholder="Ví dụ: Nguyễn Văn A..." oninput="filterUserDropdown()">
+    
     <select id="userSelect" onchange="autoFillInfo()">
       <option value="">-- Bước 1: Chọn tên của bạn --</option>
     </select>
+
     <div id="userInfo" class="tsmt-card">
       <p><b>👤 Thí sinh:</b> <span id="uName"></span> - <b>Lớp:</b> <span id="uLop"></span></p>
       <p><b>🏠 Nơi cư trú:</b> <span id="uDC"></span></p>
@@ -57,25 +60,28 @@
   <div id="adminView" style="display:none;">
     <h3>📊 QUẢN LÝ DỮ LIỆU</h3>
     <div style="background: #f9f9f9; padding: 15px; border-radius: 10px; border: 1px solid #ddd; margin-bottom: 20px;">
-      <p style="margin:0 0 10px 0; font-weight: bold;">📥 Nhập danh sách từ Excel (422 thí sinh):</p>
+      <p style="margin:0 0 10px 0; font-weight: bold;">📥 Nhập Excel hàng loạt (422 thí sinh):</p>
       <input type="file" id="excelInput" accept=".xlsx, .xls">
       <button class="btn-excel" id="importBtn" onclick="importExcel()">Tải dữ liệu lên Google Sheets</button>
     </div>
-    <input type="text" id="search" placeholder="Tìm tên hoặc lớp..." oninput="renderAdmin()">
+    
+    <div class="search-tag">🔎 Tìm tên hoặc lớp trong danh sách:</div>
+    <input type="text" id="adminSearch" placeholder="Tìm kiếm nhanh..." oninput="renderAdmin()">
+    
     <div style="overflow-x:auto">
       <table>
         <thead>
-          <tr><th>Họ Tên</th><th>Lớp</th><th>SĐT</th><th>Địa chỉ</th><th>Vị trí</th></tr>
+          <tr><th>Họ Tên</th><th>Lớp</th><th>SĐT</th><th>Địa chỉ</th><th>Vị trí (GPS)</th></tr>
         </thead>
         <tbody id="adminBody"></tbody>
       </table>
     </div>
-    <button style="background:#666; color:white; margin-top:20px" onclick="location.reload()">Quay lại trang chủ</button>
+    <button style="background:#666; color:white; margin-top:20px" onclick="location.reload()">Quay lại</button>
   </div>
 </div>
 
 <script>
-  const API_URL = "https://script.google.com/macros/s/AKfycbzgHDWgctd6neun0V-0AdNpEsT23G3WEtRE1s9wMcvpPDs5XXjaAtvFkD0B4ERAyAX7/exec";
+  const API_URL = "https://script.google.com/macros/s/AKfycbwie3_DVpFcunMeDhc9nv8mDF0JNS75nplqBSISdlSGTKap9EYm6sRYUfAup4_IBaBh/exec";
   let students = [];
   let map, marker, myCoords = "";
 
@@ -83,14 +89,25 @@
     try {
       const res = await fetch(API_URL);
       students = await res.json();
-      const sel = document.getElementById("userSelect");
-      sel.innerHTML = '<option value="">-- Bước 1: Chọn tên của bạn --</option>';
-      students.forEach((s, i) => {
-        let opt = document.createElement("option");
-        opt.value = i; opt.text = s.ten + " (" + s.lop + ")";
-        sel.appendChild(opt);
-      });
-    } catch(e) { console.log("Lỗi tải dữ liệu hoặc Sheet đang trống."); }
+      updateUserDropdown(students);
+    } catch(e) { console.log("Đang chờ nạp dữ liệu..."); }
+  }
+
+  function updateUserDropdown(list) {
+    const sel = document.getElementById("userSelect");
+    sel.innerHTML = '<option value="">-- Tìm thấy ' + list.length + ' kết quả --</option>';
+    list.forEach((s) => {
+      const originalIndex = students.indexOf(s);
+      let opt = document.createElement("option");
+      opt.value = originalIndex; opt.text = s.ten + " (" + s.lop + ")";
+      sel.appendChild(opt);
+    });
+  }
+
+  function filterUserDropdown() {
+    const q = document.getElementById("userSearch").value.toLowerCase();
+    const filtered = students.filter(s => s.ten.toLowerCase().includes(q) || s.lop.toLowerCase().includes(q));
+    updateUserDropdown(filtered);
   }
 
   function autoFillInfo() {
@@ -106,29 +123,21 @@
 
   async function importExcel() {
     const file = document.getElementById("excelInput").files[0];
-    if(!file) return alert("Vui lòng chọn file Excel trước!");
+    if(!file) return alert("Vui lòng chọn file!");
     const btn = document.getElementById("importBtn");
-    btn.innerText = "⏳ Đang nạp 422 dòng dữ liệu...";
-    btn.disabled = true;
+    btn.innerText = "⏳ Đang xử lý..."; btn.disabled = true;
 
     const reader = new FileReader();
     reader.onload = async (e) => {
       const data = new Uint8Array(e.target.result);
       const workbook = XLSX.read(data, {type: 'array'});
       const json = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], {header: 1});
-      
       const items = json.slice(1).filter(row => row[0]).map(row => ({
-        ten: row[0], lop: row[1], ns: row[2], sba: row[3] || "", sme: row[4] || "", scn: row[5] || "", dc: row[6] || ""
+        ten: row[0], lop: row[1], ns: row[2], sba: row[3]||"", sme: row[4]||"", scn: row[5]||"", dc: row[6]||""
       }));
-      
-      try {
-        const response = await fetch(API_URL, {
-          method: "POST",
-          body: JSON.stringify({ mode: "import", items: items })
-        });
-        alert("✅ Thành công! Hệ thống đã nhận " + items.length + " thí sinh.");
-        location.reload(); 
-      } catch(err) { alert("Lỗi kết nối API!"); btn.disabled = false; }
+      await fetch(API_URL, { method: "POST", body: JSON.stringify({ mode: "import", items: items }) });
+      alert("✅ Đã nạp thành công " + items.length + " thí sinh!");
+      location.reload();
     };
     reader.readAsArrayBuffer(file);
   }
@@ -142,43 +151,37 @@
         map = L.map('map').setView([lat, lng], 19);
         L.tileLayer('http://{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}',{subdomains:['mt0','mt1','mt2','mt3']}).addTo(map);
         marker = L.marker([lat, lng], { draggable: true }).addTo(map);
-        marker.on('dragend', e => {
-          const pos = e.target.getLatLng();
-          myCoords = pos.lat.toFixed(6) + "," + pos.lng.toFixed(6);
-        });
+        marker.on('dragend', e => { myCoords = e.target.getLatLng().lat.toFixed(6) + "," + e.target.getLatLng().lng.toFixed(6); });
       }
       if(document.getElementById("userSelect").value !== "") document.getElementById("sendBtn").disabled = false;
     });
   }
 
   function showLogin() { document.getElementById("userView").style.display = "none"; document.getElementById("loginBox").style.display = "block"; }
-  
   function checkAdmin() {
-    // Mật khẩu dựa trên yêu cầu trước đó của bạn
     if(document.getElementById("adminPass").value === "emancomchua2026@") {
       document.getElementById("loginBox").style.display = "none";
       document.getElementById("adminView").style.display = "block";
       renderAdmin();
-    } else alert("Sai mật khẩu quản trị!");
+    } else alert("Sai mật khẩu!");
   }
 
   function renderAdmin() {
-    const q = document.getElementById("search").value.toLowerCase();
+    const q = document.getElementById("adminSearch").value.toLowerCase();
     const body = document.getElementById("adminBody");
     body.innerHTML = "";
     students.filter(s => s.ten.toLowerCase().includes(q) || s.lop.toLowerCase().includes(q)).forEach(s => {
-      body.innerHTML += "<tr><td>"+s.ten+"</td><td>"+s.lop+"</td><td>"+s.sdtCaNhan+"</td><td>"+s.diaChi+"</td><td>"+(s.location || 'Chưa cập nhật')+"</td></tr>";
+      body.innerHTML += `<tr><td>${s.ten}</td><td>${s.lop}</td><td>${s.sdtCaNhan}</td><td>${s.diaChi}</td><td>${s.location || '❌'}</td></tr>`;
     });
   }
 
   async function uploadLocation() {
     const s = students[document.getElementById("userSelect").value];
-    document.getElementById("sendBtn").innerText = "⏳ Đang lưu vị trí...";
+    document.getElementById("sendBtn").innerText = "⏳ Đang gửi...";
     await fetch(API_URL, { method: "POST", body: JSON.stringify({ ten: s.ten, location: myCoords }) });
-    alert("✅ Đã cập nhật tọa độ nhà ở của bạn!");
+    alert("✅ Cảm ơn bạn " + s.ten + " đã cập nhật vị trí!");
     location.reload();
   }
-
   window.onload = fetchData;
 </script>
 </body>
