@@ -5,11 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Tiếp sức mùa thi - Nhập dữ liệu</title>
 
+<!-- Thư viện Bản đồ Leaflet -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <style>
-/* CSS RESET */
 :root {
   --primary-color: #0288d1;
   --secondary-color: #03a9f4;
@@ -20,11 +20,7 @@
   --text-dark: #333;
 }
 
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
+* { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -37,7 +33,6 @@ body {
   color: var(--text-dark);
 }
 
-/* CONTAINER */
 .container {
   background: white;
   padding: 30px;
@@ -48,15 +43,8 @@ body {
   overflow: hidden;
 }
 
-/* LOGO & TITLE */
-#logo {
-  text-align: center;
-  margin-bottom: 20px;
-}
-#logo img {
-  height: 90px;
-  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
-}
+#logo { text-align: center; margin-bottom: 20px; }
+#logo img { height: 90px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1)); }
 
 h2 {
   text-align: center;
@@ -66,7 +54,6 @@ h2 {
   font-weight: 700;
 }
 
-/* FORM ELEMENTS */
 input {
   width: 100%;
   padding: 14px 18px;
@@ -74,7 +61,7 @@ input {
   border: 1px solid #ddd;
   border-radius: 10px;
   font-size: 16px;
-  transition: border-color 0.3s, box-shadow 0.3s;
+  transition: all 0.3s;
 }
 
 input:focus {
@@ -83,13 +70,8 @@ input:focus {
   box-shadow: 0 0 0 3px rgba(3, 169, 244, 0.1);
 }
 
-input[readonly] {
-  background-color: #f5f5f5;
-  color: #777;
-  cursor: not-allowed;
-}
+input[readonly] { background-color: #f5f5f5; color: #777; cursor: not-allowed; }
 
-/* BUTTONS */
 button {
   width: 100%;
   padding: 14px;
@@ -99,54 +81,29 @@ button {
   font-size: 16px;
   font-weight: 600;
   cursor: pointer;
-  transition: background-color 0.3s, transform 0.1s, box-shadow 0.3s;
+  transition: all 0.2s;
 }
 
-button:active {
-  transform: translateY(1px);
-}
-
-/* Primary Button (Main Action) */
 .btn-primary {
   background: linear-gradient(135deg, var(--secondary-color), var(--primary-color));
   color: white;
   box-shadow: var(--shadow-button);
 }
 
-.btn-primary:hover {
-  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-  box-shadow: 0 6px 12px rgba(2, 136, 209, 0.4);
-}
-
-/* Secondary Button (Location, Back, Logout) */
 .btn-secondary {
   background: white;
   color: var(--primary-color);
   border: 2px solid var(--primary-color);
 }
 
-.btn-secondary:hover {
-  background: rgba(2, 136, 209, 0.05);
-}
-
-/* Map Button */
-#btn-location {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-}
-
-/* MAP */
 #map {
   height: 280px;
   margin-bottom: 20px;
   border-radius: var(--radius);
-  border: 2px solid #eee;
-  box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+  border: 1px solid #eee;
+  background-color: #f9f9f9; /* Màu nền chờ khi bản đồ tải */
 }
 
-/* FOOTER & NOTES */
 .note-container {
   background-color: rgba(255, 82, 82, 0.05);
   padding: 15px;
@@ -155,225 +112,192 @@ button:active {
   margin-bottom: 20px;
 }
 
-.note {
-  color: #d32f2f;
-  font-size: 14px;
-  line-height: 1.5;
-}
+.note { color: #d32f2f; font-size: 14px; line-height: 1.5; }
 
-hr {
-  border: 0;
-  border-top: 1px solid #eee;
-  margin: 25px 0;
-}
+hr { border: 0; border-top: 1px solid #eee; margin: 25px 0; }
 
-.footer-btn {
-  font-size: 14px;
-  padding: 10px;
-  margin-top: 10px;
-  color: #888;
-  background: none;
-  border: 1px solid #ddd;
-}
+.footer-btn { font-size: 14px; color: #888; background: none; border: none; text-decoration: underline; cursor: pointer; }
 
-.footer-btn:hover {
-  background-color: #fafafa;
-  color: #555;
-  border-color: #ccc;
-}
-
-/* ANIMATIONS */
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(-10px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
-#loginForm, #adminPanel {
-  animation: fadeIn 0.4s ease-out;
-}
-
+#loginForm, #adminPanel { animation: fadeIn 0.4s ease-out; }
 </style>
 </head>
 
 <body>
 
 <div class="container">
-
-<div id="logo">
-  <img src="logo.png" alt="Logo">
-</div>
-
-<!-- USER FORM (Trang chủ) -->
-<div id="userForm">
-  <h2>📍 Nhập thông tin</h2>
-
-  <input id="ten" placeholder="Tên học sinh" autocomplete="name">
-  <input id="lop" placeholder="Lớp">
-  <input id="location" placeholder="Tọa độ" readonly>
-
-  <button class="btn-secondary" id="btn-location" onclick="getLocation()">
-    📍 Lấy vị trí
-  </button>
-  <div id="map"></div>
-
-  <div class="note-container">
-    <p class="note">
-      <strong>⚠️ Lưu ý quan trọng:</strong> Đứng đúng vị trí thi → nhấn "Lấy vị trí" → kiểm tra kỹ bản đồ → cuối cùng mới nhấn "Gửi".
-    </p>
+  <div id="logo">
+    <img src="TSMT2026.png" alt="Logo">
   </div>
 
-  <button class="btn-primary" onclick="submitData()">
-    📤 Gửi thông tin
-  </button>
+  <!-- FORM NGƯỜI DÙNG -->
+  <div id="userForm">
+    <h2>📍 Nhập thông tin</h2>
+    <input id="ten" placeholder="Tên học sinh" autocomplete="off">
+    <input id="lop" placeholder="Lớp">
+    <input id="location" placeholder="Tọa độ" readonly>
 
-  <hr>
-  <button class="footer-btn" onclick="showAdmin()">
-    🔐 Chế độ Admin
-  </button>
-</div>
+    <button class="btn-secondary" id="btn-location" onclick="getLocation()">
+      📍 Lấy vị trí hiện tại
+    </button>
+    <div id="map"></div>
 
-<!-- LOGIN FORM (Ẩn) -->
-<div id="loginForm" style="display:none;">
-  <h2>🔐 Admin đăng nhập</h2>
-  <input id="username" placeholder="Tài khoản admin" autocomplete="username">
-  <input id="password" type="password" placeholder="Mật khẩu" autocomplete="current-password">
-  <button class="btn-primary" onclick="login()">Đăng nhập</button>
-  <button class="btn-secondary" onclick="back()">Quay lại</button>
-</div>
+    <div class="note-container">
+      <p class="note">
+        <strong>⚠️ Lưu ý:</strong> Đứng đúng vị trí → bấm "Lấy vị trí" → Kiểm tra bản đồ rồi mới bấm "Gửi".
+      </p>
+    </div>
 
-<!-- ADMIN PANEL (Ẩn) -->
-<div id="adminPanel" style="display:none;">
-  <h2>📊 Trang quản lý</h2>
-  <p style="text-align:center; margin-bottom: 30px; line-height: 1.6; color: #666;">
-    Hiện tại, dữ liệu đang được đồng bộ trực tiếp lên Google Sheets. <br>
-    Vui lòng kiểm tra dữ liệu trong trang tính được chỉ định.
-  </p>
-  <button class="btn-secondary" onclick="logout()">
-    🚪 Đăng xuất
-  </button>
-</div>
+    <button class="btn-primary" onclick="submitData()">📤 Gửi thông tin</button>
 
+    <hr>
+    <div style="text-align: center;">
+      <button class="footer-btn" onclick="showAdmin()">🔐 Quản lý hệ thống</button>
+    </div>
+  </div>
+
+  <!-- FORM ĐĂNG NHẬP -->
+  <div id="loginForm" style="display:none;">
+    <h2>🔐 Đăng nhập Admin</h2>
+    <input id="username" placeholder="Tài khoản">
+    <input id="password" type="password" placeholder="Mật khẩu">
+    <button class="btn-primary" onclick="login()">Xác nhận</button>
+    <button class="btn-secondary" onclick="back()">Quay lại</button>
+  </div>
+
+  <!-- PANEL QUẢN LÝ -->
+  <div id="adminPanel" style="display:none;">
+    <h2>📊 Quản lý dữ liệu</h2>
+    <p style="text-align:center; margin-bottom: 20px;">Dữ liệu đã được lưu trực tiếp vào Google Sheets.</p>
+    <button class="btn-secondary" onclick="logout()">🚪 Đăng xuất</button>
+  </div>
 </div>
 
 <script>
-// Giữ nguyên toàn bộ JavaScript
-
 const API_URL = "https://script.google.com/macros/s/AKfycbyDZn66agzGV4SrT4OZhHjE6aJ48O0nCDHFgaPzty2lJjFpbvTQSGq1vZPlI1O0wHtt/exec";
-
 let map, marker;
 
-// MAP
-function initMap(lat, lng){
-  if(map) map.remove();
+// KHỞI TẠO BẢN ĐỒ VÀ SỬA LỖI MÀU TRẮNG
+function initMap(lat, lng) {
+  if (!map) {
+    map = L.map('map').setView([lat, lng], 17);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '© OpenStreetMap'
+    }).addTo(map);
+    
+    marker = L.marker([lat, lng], { draggable: true }).addTo(map);
 
-  map = L.map('map').setView([lat, lng], 17);
+    marker.on('dragend', function() {
+      const pos = marker.getLatLng();
+      document.getElementById("location").value = pos.lat.toFixed(6) + "," + pos.lng.toFixed(6);
+    });
+  } else {
+    map.flyTo([lat, lng], 17);
+    marker.setLatLng([lat, lng]);
+  }
 
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 19
-  }).addTo(map);
-
-  marker = L.marker([lat, lng], { draggable:true }).addTo(map);
-
-  marker.on('dragend', function(){
-    const pos = marker.getLatLng();
-    document.getElementById("location").value =
-      pos.lat.toFixed(6) + "," + pos.lng.toFixed(6); // Làm tròn tọa độ
-  });
+  // Ép bản đồ vẽ lại hoàn chỉnh sau 300ms
+  setTimeout(() => {
+    map.invalidateSize();
+  }, 300);
 }
 
-// GPS
-function getLocation(){
-  document.getElementById("btn-location").innerText = "⏳ Đang lấy vị trí...";
-  document.getElementById("btn-location").disabled = true;
+// LẤY VỊ TRÍ GPS
+function getLocation() {
+  const btn = document.getElementById("btn-location");
+  btn.innerText = "⏳ Đang lấy vị trí...";
+  btn.disabled = true;
 
   navigator.geolocation.getCurrentPosition(
-    pos=>{
+    pos => {
       const lat = pos.coords.latitude;
       const lng = pos.coords.longitude;
-
       document.getElementById("location").value = lat.toFixed(6) + "," + lng.toFixed(6);
       initMap(lat, lng);
-      document.getElementById("btn-location").innerText = "✅ Đã lấy vị trí";
-      document.getElementById("btn-location").disabled = false;
+      btn.innerText = "✅ Đã cập nhật vị trí";
+      btn.disabled = false;
     },
-    ()=> {
-      alert("❌ Không thể lấy vị trí. Vui lòng cho phép quyền truy cập GPS hoặc thử lại.");
-      document.getElementById("btn-location").innerText = "📍 Thử lại lấy vị trí";
-      document.getElementById("btn-location").disabled = false;
+    err => {
+      alert("❌ Lỗi: Vui lòng bật GPS và cho phép trình duyệt truy cập vị trí.");
+      btn.innerText = "📍 Thử lại lấy vị trí";
+      btn.disabled = false;
     },
-    { enableHighAccuracy:true, timeout: 15000 } // Thêm timeout
+    { enableHighAccuracy: true, timeout: 10000 }
   );
 }
 
-// SEND
-function submitData(){
+// GỬI DỮ LIỆU
+function submitData() {
   const ten = document.getElementById("ten").value.trim();
   const lop = document.getElementById("lop").value.trim();
   const location = document.getElementById("location").value;
 
-  if(!ten || !lop || !location){
-    alert("❌ Vui lòng nhập đầy đủ Tên, Lớp và lấy Tọa độ!");
+  if (!ten || !lop || !location) {
+    alert("❌ Vui lòng nhập đầy đủ thông tin!");
     return;
   }
 
-  // Chuyển nút sang trạng thái đang gửi
-  const submitBtn = event.target;
-  const oldText = submitBtn.innerText;
-  submitBtn.innerText = "⏳ Đang gửi dữ liệu...";
-  submitBtn.disabled = true;
+  const btn = event.target;
+  btn.innerText = "⏳ Đang gửi...";
+  btn.disabled = true;
 
-  fetch(API_URL,{
-    method:"POST",
-    mode: "no-cors", // Thêm dòng này để xử lý lỗi CORS trên trình duyệt
-    body: JSON.stringify({ten,lop,location})
+  fetch(API_URL, {
+    method: "POST",
+    mode: "no-cors",
+    body: JSON.stringify({ ten, lop, location })
   })
-  .then(()=> {
-      alert("✅ Gửi thành công thông tin tiếp sức mùa thi!");
-      // Reset form (tùy chọn)
-      document.getElementById("ten").value = "";
-      document.getElementById("lop").value = "";
-      document.getElementById("location").value = "";
-      if(map) map.remove(); map = null;
+  .then(() => {
+    alert("✅ Gửi thành công!");
+    document.getElementById("ten").value = "";
+    document.getElementById("lop").value = "";
+    document.getElementById("location").value = "";
   })
-  .catch(()=> alert("❌ Lỗi mạng. Vui lòng kiểm tra lại kết nối và gửi lại."))
-  .finally(()=>{
-    // Phục hồi nút gửi
-    submitBtn.innerText = oldText;
-    submitBtn.disabled = false;
+  .catch(() => alert("❌ Lỗi kết nối!"))
+  .finally(() => {
+    btn.innerText = "📤 Gửi thông tin";
+    btn.disabled = false;
   });
 }
 
-// ADMIN
-function showAdmin(){
-  document.getElementById("userForm").style.display="none";
-  document.getElementById("loginForm").style.display="block";
+// ADMIN FUNCTIONS
+function showAdmin() {
+  document.getElementById("userForm").style.display = "none";
+  document.getElementById("loginForm").style.display = "block";
 }
 
-function back(){
-  document.getElementById("loginForm").style.display="none";
-  document.getElementById("userForm").style.display="block";
+function back() {
+  document.getElementById("loginForm").style.display = "none";
+  document.getElementById("userForm").style.display = "block";
 }
 
-function login(){
+function login() {
   const u = document.getElementById("username").value.trim();
   const p = document.getElementById("password").value;
 
-  if(u==="THPTNGUYENVANLINH" && p==="BTCNGUYENDUCTIEN7122009@"){
-    document.getElementById("loginForm").style.display="none";
-    document.getElementById("adminPanel").style.display="block";
+  if (u === "THPTNGUYENVANLINH" && p === "BTCNGUYENDUCTIEN7122009@") {
+    document.getElementById("loginForm").style.display = "none";
+    document.getElementById("adminPanel").style.display = "block";
   } else {
-    alert("❌ Tài khoản hoặc mật khẩu không đúng.");
+    alert("❌ Sai tài khoản hoặc mật khẩu!");
   }
 }
 
-function logout(){
-  document.getElementById("adminPanel").style.display="none";
-  document.getElementById("userForm").style.display="block";
-  // Reset admin form
+function logout() {
+  document.getElementById("adminPanel").style.display = "none";
+  document.getElementById("userForm").style.display = "block";
   document.getElementById("username").value = "";
   document.getElementById("password").value = "";
 }
 
+// TỰ ĐỘNG KHỞI TẠO BẢN ĐỒ KHI TRANG LOAD (VỊ TRÍ MẶC ĐỊNH)
+window.onload = () => {
+  initMap(10.762622, 106.660172); // Tọa độ mặc định
+};
 </script>
 
 </body>
