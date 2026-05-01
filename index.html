@@ -1,304 +1,200 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Tiếp sức mùa thi - Nhập dữ liệu</title>
-
-<!-- Thư viện Bản đồ Leaflet -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
-<style>
-:root {
-  --primary-color: #0288d1;
-  --secondary-color: #03a9f4;
-  --bg-gradient: linear-gradient(135deg, #e0f7fa 0%, #e1f5fe 100%);
-  --shadow-card: 0 10px 25px rgba(0,0,0,0.05);
-  --shadow-button: 0 4px 6px rgba(2, 136, 209, 0.3);
-  --radius: 16px;
-  --text-dark: #333;
-}
-
-* { box-sizing: border-box; margin: 0; padding: 0; }
-
-body {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background: var(--bg-gradient);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 100vh;
-  padding: 15px;
-  color: var(--text-dark);
-}
-
-.container {
-  background: white;
-  padding: 30px;
-  border-radius: var(--radius);
-  width: 100%;
-  max-width: 450px;
-  box-shadow: var(--shadow-card);
-  overflow: hidden;
-}
-
-#logo { text-align: center; margin-bottom: 20px; }
-#logo img { height: 90px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1)); }
-
-h2 {
-  text-align: center;
-  color: var(--primary-color);
-  margin-bottom: 25px;
-  font-size: 24px;
-  font-weight: 700;
-}
-
-input {
-  width: 100%;
-  padding: 14px 18px;
-  margin-bottom: 15px;
-  border: 1px solid #ddd;
-  border-radius: 10px;
-  font-size: 16px;
-  transition: all 0.3s;
-}
-
-input:focus {
-  outline: none;
-  border-color: var(--secondary-color);
-  box-shadow: 0 0 0 3px rgba(3, 169, 244, 0.1);
-}
-
-input[readonly] { background-color: #f5f5f5; color: #777; cursor: not-allowed; }
-
-button {
-  width: 100%;
-  padding: 14px;
-  margin-bottom: 12px;
-  border: none;
-  border-radius: 10px;
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.btn-primary {
-  background: linear-gradient(135deg, var(--secondary-color), var(--primary-color));
-  color: white;
-  box-shadow: var(--shadow-button);
-}
-
-.btn-secondary {
-  background: white;
-  color: var(--primary-color);
-  border: 2px solid var(--primary-color);
-}
-
-#map {
-  height: 280px;
-  margin-bottom: 20px;
-  border-radius: var(--radius);
-  border: 1px solid #eee;
-  background-color: #f9f9f9; /* Màu nền chờ khi bản đồ tải */
-}
-
-.note-container {
-  background-color: rgba(255, 82, 82, 0.05);
-  padding: 15px;
-  border-radius: 10px;
-  border-left: 4px solid #ff5252;
-  margin-bottom: 20px;
-}
-
-.note { color: #d32f2f; font-size: 14px; line-height: 1.5; }
-
-hr { border: 0; border-top: 1px solid #eee; margin: 25px 0; }
-
-.footer-btn { font-size: 14px; color: #888; background: none; border: none; text-decoration: underline; cursor: pointer; }
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(-10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-#loginForm, #adminPanel { animation: fadeIn 0.4s ease-out; }
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hệ thống Tiếp Sức Mùa Thi 2026</title>
+  <!-- Leaflet Map -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <!-- Thư viện đọc file Excel -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  
+  <style>
+    :root { --blue: #0288d1; --bg: #f4f7f9; --green: #2e7d32; }
+    body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding: 10px; }
+    .container { max-width: 1000px; margin: auto; background: white; padding: 20px; border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); }
+    .banner { width: 100%; border-radius: 10px; margin-bottom: 15px; }
+    
+    .tsmt-card { background: #e3f2fd; padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #bbdefb; display: none; }
+    h3 { color: var(--blue); text-align: center; margin-top: 0; }
+    select, input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px; margin-bottom: 10px; box-sizing: border-box; }
+    
+    button { padding: 14px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; transition: 0.2s; }
+    .btn-gps { background: var(--blue); color: white; }
+    .btn-send { background: var(--green); color: white; margin-top: 10px; }
+    .btn-excel { background: #ff9800; color: white; margin-bottom: 15px; }
+    .btn-admin-gate { background: none; color: #aaa; margin-top: 40px; font-size: 11px; border: 1px dashed #ccc; }
+    
+    #map { height: 400px; border-radius: 10px; margin: 10px 0; border: 2px solid var(--blue); display: none; }
+    table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 15px; min-width: 900px; }
+    th { background: #f1f8ff; padding: 10px; text-align: left; border-bottom: 2px solid #ddd; }
+    td { padding: 10px; border-bottom: 1px solid #eee; }
+  </style>
 </head>
-
 <body>
 
 <div class="container">
-  <div id="logo">
-    <img src="TSMT2026.png" alt="Logo">
-  </div>
+  <img src="TSMT2026.PNG" alt="TSMT 2026" class="banner">
 
-  <!-- FORM NGƯỜI DÙNG -->
-  <div id="userForm">
-    <h2>📍 Nhập thông tin</h2>
-    <input id="ten" placeholder="Tên học sinh" autocomplete="off">
-    <input id="lop" placeholder="Lớp">
-    <input id="location" placeholder="Tọa độ" readonly>
+  <!-- VIEW NGƯỜI DÙNG -->
+  <div id="userView">
+    <h3>📍 CẬP NHẬT VỊ TRÍ NHÀ Ở</h3>
+    <select id="userSelect" onchange="autoFillInfo()">
+      <option value="">-- Bước 1: Chọn tên của bạn --</option>
+    </select>
 
-    <button class="btn-secondary" id="btn-location" onclick="getLocation()">
-      📍 Lấy vị trí hiện tại
-    </button>
+    <div id="userInfo" class="tsmt-card">
+      <p><b>👤 Thí sinh:</b> <span id="uName"></span> - <b>Lớp:</b> <span id="uLop"></span></p>
+      <p><b>🏠 Nơi cư trú:</b> <span id="uDC"></span></p>
+    </div>
+
+    <button class="btn-gps" onclick="askLocation()">Bước 2: Lấy vị trí GPS</button>
     <div id="map"></div>
-
-    <div class="note-container">
-      <p class="note">
-        <strong>⚠️ Lưu ý:</strong> Đứng đúng vị trí → bấm "Lấy vị trí" → Kiểm tra bản đồ rồi mới bấm "Gửi".
-      </p>
-    </div>
-
-    <button class="btn-primary" onclick="submitData()">📤 Gửi thông tin</button>
-
-    <hr>
-    <div style="text-align: center;">
-      <button class="footer-btn" onclick="showAdmin()">🔐 Quản lý hệ thống</button>
-    </div>
+    <button id="sendBtn" class="btn-send" onclick="uploadLocation()" disabled>Bước 3: Xác nhận & Gửi</button>
+    <button class="btn-admin-gate" onclick="showLogin()">🔐 QUẢN TRỊ VIÊN</button>
   </div>
 
-  <!-- FORM ĐĂNG NHẬP -->
-  <div id="loginForm" style="display:none;">
-    <h2>🔐 Đăng nhập Admin</h2>
-    <input id="username" placeholder="Tài khoản">
-    <input id="password" type="password" placeholder="Mật khẩu">
-    <button class="btn-primary" onclick="login()">Xác nhận</button>
-    <button class="btn-secondary" onclick="back()">Quay lại</button>
+  <!-- LOGIN ADMIN -->
+  <div id="loginBox" style="display:none; text-align:center;">
+    <h3>XÁC THỰC ADMIN</h3>
+    <input type="password" id="adminPass" placeholder="Mật khẩu...">
+    <button class="btn-send" onclick="checkAdmin()">Vào hệ thống</button>
   </div>
 
-  <!-- PANEL QUẢN LÝ -->
-  <div id="adminPanel" style="display:none;">
-    <h2>📊 Quản lý dữ liệu</h2>
-    <p style="text-align:center; margin-bottom: 20px;">Dữ liệu đã được lưu trực tiếp vào Google Sheets.</p>
-    <button class="btn-secondary" onclick="logout()">🚪 Đăng xuất</button>
+  <!-- VIEW ADMIN -->
+  <div id="adminView" style="display:none;">
+    <h3>📊 QUẢN LÝ DỮ LIỆU</h3>
+    
+    <!-- CHỖ NHẬP EXCEL NHANH -->
+    <div style="background: #f9f9f9; padding: 15px; border-radius: 10px; border: 1px solid #ddd; margin-bottom: 20px;">
+      <p style="margin-top:0; font-size: 13px; font-weight: bold;">📥 Nhập danh sách nhanh từ file Excel:</p>
+      <input type="file" id="excelInput" accept=".xlsx, .xls" style="font-size: 12px;">
+      <button class="btn-excel" onclick="importExcel()">Tải dữ liệu lên hệ thống</button>
+      <small style="color: red;">* Lưu ý: Cột Excel phải đúng thứ tự: Tên, Lớp, Ngày sinh, SĐT Ba, SĐT Mẹ, SĐT CN, Địa chỉ.</small>
+    </div>
+
+    <input type="text" id="search" placeholder="Tìm tên hoặc lớp..." oninput="renderAdmin()">
+    <div style="overflow-x:auto">
+      <table>
+        <thead>
+          <tr><th>Họ Tên</th><th>Lớp</th><th>SĐT</th><th>Địa chỉ</th><th>Vị trí</th></tr>
+        </thead>
+        <tbody id="adminBody"></tbody>
+      </table>
+    </div>
+    <button style="background:#666; color:white; margin-top:20px" onclick="location.reload()">Quay lại</button>
   </div>
 </div>
 
 <script>
-const API_URL = "https://script.google.com/macros/s/AKfycbyDZn66agzGV4SrT4OZhHjE6aJ48O0nCDHFgaPzty2lJjFpbvTQSGq1vZPlI1O0wHtt/exec";
-let map, marker;
+  const API_URL = "https://script.google.com/macros/s/AKfycbyvq8bido3iMzOOERg6jwOkK17SU7KYw6dj2ARh-N0ATJ6RHJ3pC9UHHP1xK08d0lGE/exec";
+  let students = [];
+  let map, marker, myCoords = "";
 
-// KHỞI TẠO BẢN ĐỒ VÀ SỬA LỖI MÀU TRẮNG
-function initMap(lat, lng) {
-  if (!map) {
-    map = L.map('map').setView([lat, lng], 17);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19,
-      attribution: '© OpenStreetMap'
-    }).addTo(map);
+  async function fetchData() {
+    try {
+      const res = await fetch(API_URL);
+      students = await res.json();
+      const sel = document.getElementById("userSelect");
+      sel.innerHTML = '<option value="">-- Bước 1: Chọn tên của bạn --</option>';
+      students.forEach((s, i) => {
+        let opt = document.createElement("option");
+        opt.value = i; opt.text = `${s.ten} (${s.lop})`;
+        sel.appendChild(opt);
+      });
+    } catch(e) { console.log("Chưa có dữ liệu trên Sheet."); }
+  }
+
+  function autoFillInfo() {
+    const s = students[document.getElementById("userSelect").value];
+    if(s) {
+      document.getElementById("userInfo").style.display = "block";
+      document.getElementById("uName").innerText = s.ten;
+      document.getElementById("uLop").innerText = s.lop;
+      document.getElementById("uDC").innerText = s.diaChi;
+      if(myCoords) document.getElementById("sendBtn").disabled = false;
+    }
+  }
+
+  // Xử lý nhập file Excel
+  function importExcel() {
+    const file = document.getElementById("excelInput").files[0];
+    if(!file) return alert("Vui lòng chọn file!");
     
-    marker = L.marker([lat, lng], { draggable: true }).addTo(map);
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      const data = new Uint8Array(e.target.result);
+      const workbook = XLSX.read(data, {type: 'array'});
+      const sheetName = workbook.SheetNames[0];
+      const json = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], {header: 1});
+      
+      // Bỏ qua dòng tiêu đề, lấy từ dòng 2
+      const newRows = json.slice(1).filter(row => row[0]); 
+      
+      alert(`Đang tải ${newRows.length} thí sinh lên Google Sheets...`);
+      
+      // Gửi từng dòng lên Sheet (hoặc bạn có thể viết hàm POST mảng trong Script)
+      for(let row of newRows) {
+        await fetch(API_URL, {
+          method: "POST",
+          body: JSON.stringify({
+            mode: "import", // Thêm mode để Script phân biệt
+            ten: row[0], lop: row[1], ns: row[2], sba: row[3], sme: row[4], scn: row[5], dc: row[6]
+          })
+        });
+      }
+      alert("✅ Hoàn tất nhập dữ liệu!");
+      location.reload();
+    };
+    reader.readAsArrayBuffer(file);
+  }
 
-    marker.on('dragend', function() {
-      const pos = marker.getLatLng();
-      document.getElementById("location").value = pos.lat.toFixed(6) + "," + pos.lng.toFixed(6);
+  function askLocation() {
+    navigator.geolocation.getCurrentPosition(p => {
+      const lat = p.coords.latitude, lng = p.coords.longitude;
+      myCoords = `${lat.toFixed(6)},${lng.toFixed(6)}`;
+      document.getElementById("map").style.display = "block";
+      if(!map) {
+        map = L.map('map').setView([lat, lng], 19);
+        L.tileLayer('http://{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}',{subdomains:['mt0','mt1','mt2','mt3']}).addTo(map);
+        marker = L.marker([lat, lng], { draggable: true }).addTo(map);
+        marker.on('dragend', e => {
+          const pos = e.target.getLatLng();
+          myCoords = `${pos.lat.toFixed(6)},${pos.lng.toFixed(6)}`;
+        });
+      }
+      if(document.getElementById("userSelect").value !== "") document.getElementById("sendBtn").disabled = false;
     });
-  } else {
-    map.flyTo([lat, lng], 17);
-    marker.setLatLng([lat, lng]);
   }
 
-  // Ép bản đồ vẽ lại hoàn chỉnh sau 300ms
-  setTimeout(() => {
-    map.invalidateSize();
-  }, 300);
-}
-
-// LẤY VỊ TRÍ GPS
-function getLocation() {
-  const btn = document.getElementById("btn-location");
-  btn.innerText = "⏳ Đang lấy vị trí...";
-  btn.disabled = true;
-
-  navigator.geolocation.getCurrentPosition(
-    pos => {
-      const lat = pos.coords.latitude;
-      const lng = pos.coords.longitude;
-      document.getElementById("location").value = lat.toFixed(6) + "," + lng.toFixed(6);
-      initMap(lat, lng);
-      btn.innerText = "✅ Đã cập nhật vị trí";
-      btn.disabled = false;
-    },
-    err => {
-      alert("❌ Lỗi: Vui lòng bật GPS và cho phép trình duyệt truy cập vị trí.");
-      btn.innerText = "📍 Thử lại lấy vị trí";
-      btn.disabled = false;
-    },
-    { enableHighAccuracy: true, timeout: 10000 }
-  );
-}
-
-// GỬI DỮ LIỆU
-function submitData() {
-  const ten = document.getElementById("ten").value.trim();
-  const lop = document.getElementById("lop").value.trim();
-  const location = document.getElementById("location").value;
-
-  if (!ten || !lop || !location) {
-    alert("❌ Vui lòng nhập đầy đủ thông tin!");
-    return;
+  function showLogin() { document.getElementById("userView").style.display = "none"; document.getElementById("loginBox").style.display = "block"; }
+  function checkAdmin() {
+    if(document.getElementById("adminPass").value === "123456") {
+      document.getElementById("loginBox").style.display = "none";
+      document.getElementById("adminView").style.display = "block";
+      renderAdmin();
+    } else alert("Sai mật khẩu!");
   }
 
-  const btn = event.target;
-  btn.innerText = "⏳ Đang gửi...";
-  btn.disabled = true;
-
-  fetch(API_URL, {
-    method: "POST",
-    mode: "no-cors",
-    body: JSON.stringify({ ten, lop, location })
-  })
-  .then(() => {
-    alert("✅ Gửi thành công!");
-    document.getElementById("ten").value = "";
-    document.getElementById("lop").value = "";
-    document.getElementById("location").value = "";
-  })
-  .catch(() => alert("❌ Lỗi kết nối!"))
-  .finally(() => {
-    btn.innerText = "📤 Gửi thông tin";
-    btn.disabled = false;
-  });
-}
-
-// ADMIN FUNCTIONS
-function showAdmin() {
-  document.getElementById("userForm").style.display = "none";
-  document.getElementById("loginForm").style.display = "block";
-}
-
-function back() {
-  document.getElementById("loginForm").style.display = "none";
-  document.getElementById("userForm").style.display = "block";
-}
-
-function login() {
-  const u = document.getElementById("username").value.trim();
-  const p = document.getElementById("password").value;
-
-  if (u === "THPTNGUYENVANLINH" && p === "BTCNGUYENDUCTIEN7122009@") {
-    document.getElementById("loginForm").style.display = "none";
-    document.getElementById("adminPanel").style.display = "block";
-  } else {
-    alert("❌ Sai tài khoản hoặc mật khẩu!");
+  function renderAdmin() {
+    const q = document.getElementById("search").value.toLowerCase();
+    const body = document.getElementById("adminBody");
+    body.innerHTML = "";
+    students.filter(s => s.ten.toLowerCase().includes(q)).forEach(s => {
+      body.innerHTML += `<tr><td>${s.ten}</td><td>${s.lop}</td><td>${s.sdtCaNhan}</td><td>${s.diaChi}</td><td>${s.location || '...'}</td></tr>`;
+    });
   }
-}
 
-function logout() {
-  document.getElementById("adminPanel").style.display = "none";
-  document.getElementById("userForm").style.display = "block";
-  document.getElementById("username").value = "";
-  document.getElementById("password").value = "";
-}
+  async function uploadLocation() {
+    const s = students[document.getElementById("userSelect").value];
+    document.getElementById("sendBtn").innerText = "⏳ Đang gửi...";
+    await fetch(API_URL, { method: "POST", body: JSON.stringify({ ten: s.ten, location: myCoords }) });
+    alert("✅ Thành công!");
+    location.reload();
+  }
 
-// TỰ ĐỘNG KHỞI TẠO BẢN ĐỒ KHI TRANG LOAD (VỊ TRÍ MẶC ĐỊNH)
-window.onload = () => {
-  initMap(10.762622, 106.660172); // Tọa độ mặc định
-};
+  window.onload = fetchData;
 </script>
-
 </body>
 </html>
