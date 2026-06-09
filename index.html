@@ -18,20 +18,28 @@
     .tab-btn.active { background: var(--blue); color: white; }
 
     .search-tag { background: #fffde7; border-left: 5px solid #fbc02d; padding: 8px; margin-bottom: 5px; font-size: 13px; font-weight: bold; }
-    .tsmt-card { background: #e3f2fd; padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #bbdefb; display: none; }
+    
+    /* Giao diện thẻ thông tin rút gọn cho Học sinh */
+    .results-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 15px; margin-bottom: 15px; }
+    .tsmt-card { background: #e3f2fd; padding: 15px; border-radius: 12px; border: 1px solid #bbdefb; position: relative; }
     .tsmt-card.warning { background: #ffebee; border: 1px solid #ffcdd2; }
     .tsmt-card.warning b, .tsmt-card.warning span { color: #c62828; }
-    h3 { color: var(--blue); text-align: center; margin-top: 0; text-transform: uppercase; }
-    select, input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px; margin-bottom: 10px; box-sizing: border-box; font-size: 16px; }
-    button { padding: 14px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; transition: 0.2s; font-size: 15px; }
-    .btn-gps { background: var(--blue); color: white; }
-    .btn-gps:disabled { background: #b0bec5; cursor: not-allowed; }
-    .btn-send { background: var(--green); color: white; margin-top: 10px; }
-    .btn-send:disabled { background: #b0bec5; cursor: not-allowed; }
-    .btn-excel { background: #ff9800; color: white; margin-bottom: 15px; }
-    .btn-admin-gate { background: none; color: #aaa; margin-top: 40px; font-size: 11px; border: 1px dashed #ccc; }
-    #map { height: 400px; border-radius: 10px; margin: 10px 0; border: 2px solid var(--blue); display: none; }
+    .card-title { font-size: 15px; color: #01579b; margin-top: 0; border-bottom: 1px dashed #b3e5fc; padding-bottom: 5px; font-weight: bold; }
     
+    h3 { color: var(--blue); text-align: center; margin-top: 0; text-transform: uppercase; }
+    input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px; margin-bottom: 10px; box-sizing: border-box; font-size: 16px; }
+    button { padding: 10px 14px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.2s; font-size: 14px; }
+    
+    .btn-gps { background: var(--blue); color: white; width: 100%; margin-top: 8px; }
+    .btn-gps:disabled { background: #b0bec5; cursor: not-allowed; }
+    .btn-send { background: var(--green); color: white; width: 100%; margin-top: 8px; }
+    .btn-send:disabled { background: #b0bec5; cursor: not-allowed; }
+    
+    .btn-excel { background: #ff9800; color: white; margin-bottom: 15px; width: 100%; padding: 14px; }
+    .btn-admin-gate { background: none; color: #aaa; margin-top: 40px; font-size: 11px; border: 1px dashed #ccc; width: 100%; padding: 14px; }
+    #map { height: 350px; border-radius: 10px; margin: 10px 0; border: 2px solid var(--blue); display: none; }
+    
+    /* Bảng dữ liệu bảo mật của Admin */
     table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 15px; min-width: 1100px; }
     th { background: #f1f8ff; padding: 10px; text-align: left; border-bottom: 2px solid #ddd; white-space: nowrap; }
     td { padding: 10px; border-bottom: 1px solid #eee; }
@@ -46,6 +54,7 @@
     
     .map-link { color: #0288d1; font-weight: bold; text-decoration: underline; cursor: pointer; }
     .map-link:hover { color: #01579b; }
+    .loading-text { text-align: center; color: #777; font-style: italic; padding: 10px; }
   </style>
 </head>
 <body>
@@ -65,50 +74,42 @@
     <div id="studentFormSection">
       <p class="device-note">⚠️ LƯU Ý: Vui lòng sử dụng ĐIỆN THOẠI và đứng TẠI NHÀ để lấy vị trí chính xác nhất.</p>
       
-      <div class="search-tag">🔍 Gõ tên bạn để tìm nhanh:</div>
-      <input type="text" id="userSearch" placeholder="Ví dụ: Nguyễn Văn A..." oninput="filterUserDropdown()">
+      <div class="search-tag">🔍 Nhập tên bạn để tìm kiếm (Có thể tìm 2-3 người cùng lúc, cách nhau bằng dấu phẩy):</div>
+      <input type="text" id="userSearch" placeholder="Ví dụ: Nguyễn Văn A, Trần Thị B..." oninput="filterUserCards()">
       
-      <select id="userSelect" onchange="autoFillInfo()">
-        <option value="">⏳ Hệ thống đang nạp dữ liệu, vui lòng đợi...</option>
-      </select>
+      <div id="loadingStatus" class="loading-text">⏳ Hệ thống đang nạp dữ liệu, vui lòng đợi...</div>
+      
+      <div id="resultsContainer" class="results-container"></div>
 
-      <div id="userInfo" class="tsmt-card">
-        <p><b>👤 Thí sinh:</b> <span id="uName"></span> - <b>Lớp:</b> <span id="uLop"></span></p>
-        <p><b>🏠 Nơi cư trú:</b> <span id="uDC"></span></p>
-        <div id="statusMessage"></div>
-      </div>
-      
-      <button id="gpsBtn" class="btn-gps" onclick="askLocation()">Bước 2: Lấy vị trí GPS</button>
       <div id="map"></div>
-      <button id="sendBtn" class="btn-send" onclick="uploadLocation()" disabled>Bước 3: Xác nhận & Gửi</button>
     </div>
 
     <div id="adminOnlyNotice" class="admin-only-notice" style="display: none;">
       🔒 Khu vực này chỉ dành cho Quản trị viên của trường. Thí sinh không có quyền tự điền form tại đây.
     </div>
     
-    <button class="btn-admin-gate" onclick="showLogin()">🔐 QUẢN TRỊ VIÊN</button>
+    <button class="btn-admin-gate" onclick="showLogin()">🔐 QUẢN TRỊ VIÊN HỆ THỐNG</button>
   </div>
 
-  <div id="loginBox" style="display:none; text-align:center;">
+  <div id="loginBox" style="display:none; text-align:center; max-width: 400px; margin: auto; padding: 20px; border: 1px solid #ccc; border-radius: 10px; background: #fff;">
     <h3 id="loginTitle">XÁC THỰC ADMIN</h3>
-    <input type="password" id="adminPass" placeholder="Mật khẩu...">
+    <input type="password" id="adminPass" placeholder="Mật khẩu quản trị...">
     <button class="btn-send" onclick="checkAdmin()">Vào hệ thống</button>
-    <button style="background:#666; color:white; margin-top:10px" onclick="cancelLogin()">Quay lại</button>
+    <button style="background:#666; color:white; margin-top:10px; width: 100%;" onclick="cancelLogin()">Quay lại</button>
   </div>
 
   <div id="adminView" style="display:none;">
     <h3 id="adminViewTitle">📊 QUẢN LÝ DỮ LIỆU</h3>
     
     <div style="background: #f9f9f9; padding: 15px; border-radius: 10px; border: 1px solid #ddd; margin-bottom: 20px;">
-      <p style="margin:0 0 10px 0; font-weight: bold;">📥 Nhập Excel hàng loạt:</p>
+      <p style="margin:0 0 10px 0; font-weight: bold;">📥 Nhập Excel hàng loạt (Cấu trúc 9 cột):</p>
       <input type="file" id="excelInput" accept=".xlsx, .xls">
       <button class="btn-excel" id="importBtn" onclick="importExcel()">Tải dữ liệu lên Google Sheets</button>
     </div>
 
     <div class="history-section">
       <p style="margin:0 0 10px 0; font-weight: bold; color: #d84315;">🕒 Lịch sử thí sinh tra cứu form gần đây:</p>
-      <div style="max-height: 150px; overflow-y: auto;">
+      <div style="max-height: 180px; overflow-y: auto;">
         <table class="history-table" style="min-width: 100%;">
           <thead>
             <tr><th>Thời gian</th><th>Trường</th><th>Thí sinh tra cứu</th><th>Lớp</th></tr>
@@ -120,8 +121,8 @@
       </div>
     </div>
     
-    <div class="search-tag">🔎 Tìm tên hoặc lớp trong danh sách:</div>
-    <input type="text" id="adminSearch" placeholder="Tìm kiếm nhanh..." oninput="renderAdmin()">
+    <div class="search-tag">🔎 Tìm nhanh thông tin trong danh sách tổng:</div>
+    <input type="text" id="adminSearch" placeholder="Tìm kiếm nhanh theo tên hoặc lớp..." oninput="renderAdmin()">
     
     <div style="overflow-x:auto">
       <table>
@@ -141,7 +142,7 @@
         <tbody id="adminBody"></tbody>
       </table>
     </div>
-    <button style="background:#666; color:white; margin-top:20px" onclick="location.reload()">Đăng xuất / Quay lại</button>
+    <button style="background:#666; color:white; margin-top:20px; width: 100%; padding: 14px;" onclick="location.reload()">Đăng xuất / Quay lại</button>
   </div>
 
   <div class="footer">
@@ -151,7 +152,6 @@
 </div>
 
 <script>
-  // ĐÃ LINK CHÍNH XÁC ĐẾN WEB APP CỦA BẠN:
   const API_URL = "https://script.google.com/macros/s/AKfycbwDJJLFjf8koeOcsb5CAE34P_-ZtBQ3fiRzFR5Q6L3Fy6aDApxWNuV8c-YFB3OEj49BLw/exec";
   
   const ADMIN_PASSWORDS = {
@@ -163,6 +163,7 @@
   let currentSchool = "NVL"; 
   let students = [];
   let map, marker, myCoords = "";
+  let selectedStudentIndex = null; 
   let searchHistory = []; 
   let filterTimeout = null;
 
@@ -175,10 +176,11 @@
     }
 
     document.getElementById("userSearch").value = "";
-    document.getElementById("userInfo").style.display = "none";
-    document.getElementById("map").style.display = "none";
-    document.getElementById("userSelect").innerHTML = '<option value="">⏳ Hệ thống đang nạp dữ liệu, vui lòng đợi...</option>';
+    document.getElementById("resultsContainer").innerHTML = "";
+    document.getElementById("loadingStatus").style.display = "block";
+    if(map) { document.getElementById("map").style.display = "none"; }
     myCoords = "";
+    selectedStudentIndex = null;
 
     const schoolNames = { NVL: "THPT Nguyễn Văn Linh", NCT: "THPT Nguyễn Công Trứ", THD: "THCS Trần Hưng Đạo" };
     document.getElementById("schoolTitle").innerText = `📍 CẬP NHẬT VỊ TRÍ NHÀ Ở - ${schoolNames[schoolCode].toUpperCase()}`;
@@ -198,83 +200,91 @@
     try {
       const res = await fetch(API_URL);
       students = await res.json();
+      document.getElementById("loadingStatus").style.display = "none";
       if(currentSchool === "NVL") {
-        updateUserDropdown(students);
+        renderUserCards([]);
       }
-    } catch(e) { console.log("Đang chờ nạp dữ liệu..."); }
+    } catch(e) { console.log("Lỗi tải kết nối..."); }
   }
 
-  function updateUserDropdown(list) {
-    const sel = document.getElementById("userSelect");
-    sel.innerHTML = '<option value="">-- Bước 1: Chọn tên của bạn (Tìm thấy ' + list.length + ' kết quả) --</option>';
-    
-    const shortList = list.slice(0, 30);
-    
-    shortList.forEach((s) => {
-      const originalIndex = students.indexOf(s);
-      let opt = document.createElement("option");
-      opt.value = originalIndex; opt.text = s.ten + " (" + s.lop + ")";
-      sel.appendChild(opt);
-    });
-  }
-
-  function filterUserDropdown() {
+  function filterUserCards() {
     clearTimeout(filterTimeout);
     filterTimeout = setTimeout(() => {
-      const q = document.getElementById("userSearch").value.toLowerCase();
-      const filtered = students.filter(s => s.ten.toLowerCase().includes(q) || s.lop.toLowerCase().includes(q));
-      updateUserDropdown(filtered);
-    }, 250);
+      const query = document.getElementById("userSearch").value.trim().toLowerCase();
+      if(query === "") {
+        document.getElementById("resultsContainer").innerHTML = "";
+        return;
+      }
+
+      const keywords = query.split(",").map(k => k.trim()).filter(k => k !== "");
+      
+      let filtered = [];
+      if(keywords.length > 0) {
+        filtered = students.filter(s => {
+          return keywords.some(keyword => s.ten.toLowerCase().includes(keyword) || s.lop.toLowerCase().includes(keyword));
+        });
+      }
+
+      renderUserCards(filtered.slice(0, 10)); // Giới hạn hiển thị 10 người cùng lúc cho mượt
+    }, 300);
   }
 
-  function autoFillInfo() {
-    const selectedVal = document.getElementById("userSelect").value;
-    if(selectedVal === "") {
-      document.getElementById("userInfo").style.display = "none";
+  // HÀM HIỂN THỊ CHO HỌC SINH: Chỉ hiện Tên, Lớp, Địa chỉ. Giấu SBD, Điểm thi, SĐT và tọa độ cũ.
+  function renderUserCards(list) {
+    const container = document.getElementById("resultsContainer");
+    container.innerHTML = "";
+
+    if(list.length === 0 && document.getElementById("userSearch").value.trim() !== "") {
+      container.innerHTML = `<div class="loading-text" style="grid-column: 1/-1;">❌ Không tìm thấy thí sinh khớp với từ khóa!</div>`;
       return;
     }
 
-    const s = students[selectedVal];
-    const card = document.getElementById("userInfo");
-    const gpsBtn = document.getElementById("gpsBtn");
-    const sendBtn = document.getElementById("sendBtn");
-    const statusMsg = document.getElementById("statusMessage");
-    const mapDiv = document.getElementById("map");
-
-    if(s) {
-      card.style.display = "block";
-      document.getElementById("uName").innerText = s.ten;
-      document.getElementById("uLop").innerText = s.lop;
-      document.getElementById("uDC").innerText = s.diaChi;
+    list.forEach((s) => {
+      const originalIndex = students.indexOf(s);
+      // Kiểm tra xem thí sinh này đã điền tọa độ GPS lên sheet hay chưa
+      const isConfigured = s.location && s.location.trim() !== "" && s.location.trim() !== "❌";
       
-      const now = new Date();
-      const timeStr = now.getHours().toString().padStart(2, '0') + ":" + now.getMinutes().toString().padStart(2, '0') + ":" + now.getSeconds().toString().padStart(2, '0');
-      const schoolNames = { NVL: "NVL", NCT: "NCT", THD: "THD" };
+      const card = document.createElement("div");
+      card.className = `tsmt-card ${isConfigured ? 'warning' : ''}`;
+      card.id = `card-${originalIndex}`;
+      
+      if (isConfigured) {
+        // NẾU ĐÃ LẤY RỒI: Chỉ hiện thông báo đã lấy, không lộ thông tin nhạy cảm và tọa độ vị trí.
+        card.innerHTML = `
+          <div class="card-title">🏫 Lớp: ${s.lop}</div>
+          <p style="margin: 8px 0;"><b>👤 Thí sinh:</b> <span style="font-weight:bold; color:#c62828;">${s.ten}</span></p>
+          <p style="margin: 5px 0 0 0; font-weight:bold; color:#c62828; font-size:13px;">🛑 Hệ thống ghi nhận bạn ĐÃ ĐỊNH VỊ THÀNH CÔNG trước đó.</p>
+        `;
+      } else {
+        // NẾU CHƯA LẤY: Hiện form cho học sinh tự thao tác lấy GPS
+        card.innerHTML = `
+          <div class="card-title">🏫 Lớp: ${s.lop}</div>
+          <p style="margin: 8px 0;"><b>👤 Thí sinh:</b> <span style="font-weight:bold; color:var(--blue);">${s.ten}</span></p>
+          <p style="margin: 8px 0; font-size:13px;"><b>🏠 Nơi cư trú:</b> ${s.diaChi}</p>
+          <button class="btn-gps" onclick="askLocationFor(${originalIndex})">Bước 2: Lấy vị trí GPS</button>
+          <button class="btn-send" id="sendBtn-${originalIndex}" onclick="uploadLocationFor(${originalIndex})" disabled>Bước 3: Xác nhận & Gửi</button>
+        `;
+      }
+      container.appendChild(card);
+      
+      // Ghi nhận lịch sử ngầm để đẩy vào trang quản trị Admin
+      logSearchHistory(s);
+    });
+  }
+
+  function logSearchHistory(student) {
+    const now = new Date();
+    const timeStr = now.getHours().toString().padStart(2, '0') + ":" + now.getMinutes().toString().padStart(2, '0') + ":" + now.getSeconds().toString().padStart(2, '0');
+    const schoolNames = { NVL: "NVL", NCT: "NCT", THD: "THD" };
+    
+    if(searchHistory.length === 0 || searchHistory[0].ten !== student.ten) {
       searchHistory.unshift({
         time: timeStr,
         school: schoolNames[currentSchool],
-        ten: s.ten,
-        lop: s.lop
+        ten: student.ten,
+        lop: student.lop
       });
-      renderHistory(); 
-
-      if (s.location && s.location.trim() !== "" && s.location.trim() !== "❌") {
-        card.classList.add("warning");
-        statusMsg.innerHTML = `<p style="margin: 10px 0 0 0; font-weight: bold;">
-          🛑 Hệ thống ghi nhận bạn ĐÃ ĐỊNH VỊ TRƯỚC ĐÓ.
-        </p>`;
-        gpsBtn.disabled = true;
-        sendBtn.disabled = true;
-        mapDiv.style.display = "none";
-        myCoords = ""; 
-      } else {
-        card.classList.remove("warning");
-        statusMsg.innerHTML = "";
-        gpsBtn.disabled = false;
-        if(myCoords) sendBtn.disabled = false;
-      }
-    } else {
-      card.style.display = "none";
+      renderHistory();
     }
   }
 
@@ -286,17 +296,25 @@
       return;
     }
     hBody.innerHTML = "";
-    searchHistory.forEach(h => {
+    searchHistory.slice(0, 15).forEach(h => { 
       hBody.innerHTML += `<tr><td>${h.time}</td><td><b>${h.school}</b></td><td>${h.ten}</td><td>${h.lop}</td></tr>`;
     });
   }
 
-  function askLocation() {
+  function askLocationFor(index) {
     if (!navigator.geolocation) return alert("Trình duyệt không hỗ trợ định vị!");
+    selectedStudentIndex = index;
+
     navigator.geolocation.getCurrentPosition(p => {
       const lat = p.coords.latitude, lng = p.coords.longitude;
       myCoords = lat.toFixed(6) + "," + lng.toFixed(6);
-      document.getElementById("map").style.display = "block";
+      
+      const mapDiv = document.getElementById("map");
+      mapDiv.style.display = "block";
+      
+      const selectedCard = document.getElementById(`card-${index}`);
+      selectedCard.after(mapDiv);
+
       if(!map) {
         map = L.map('map').setView([lat, lng], 19);
         L.tileLayer('http://{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}',{subdomains:['mt0','mt1','mt2','mt3']}).addTo(map);
@@ -307,16 +325,28 @@
         marker.setLatLng([lat, lng]);
       }
       
-      const selectedIndex = document.getElementById("userSelect").value;
-      if(selectedIndex !== "") {
-         const s = students[selectedIndex];
-         if (!s.location || s.location.trim() === "" || s.location.trim() === "❌") {
-            document.getElementById("sendBtn").disabled = false;
-         }
-      }
+      document.getElementById(`sendBtn-${index}`).disabled = false;
     }, (error) => {
-        alert("Lỗi định vị: Vui lòng bật quyền truy cập vị trí!");
+        alert("Lỗi: Vui lòng cho phép quyền truy cập vị trí trên trình duyệt!");
     }, { enableHighAccuracy: true });
+  }
+
+  async function uploadLocationFor(index) {
+    const s = students[index];
+    const sendBtn = document.getElementById(`sendBtn-${index}`);
+    
+    sendBtn.innerText = "⏳ Đang gửi...";
+    sendBtn.disabled = true;
+
+    try {
+        await fetch(API_URL, { method: "POST", body: JSON.stringify({ ten: s.ten, location: myCoords, school: currentSchool }) });
+        alert("✅ Cảm ơn bạn " + s.ten + " đã cập nhật tọa độ thành công!");
+        location.reload();
+    } catch (e) {
+        alert("Gặp lỗi mạng, vui lòng thử lại!");
+        sendBtn.innerText = "Bước 3: Xác nhận & Gửi";
+        sendBtn.disabled = false;
+    }
   }
 
   function showLogin() { 
@@ -343,60 +373,41 @@
       renderAdmin();
       renderHistory(); 
     } else {
-      alert("Sai mật khẩu quản trị của trường này!");
+      alert("Mật khẩu Quản trị viên không đúng!");
     }
   }
 
+  // HÀM HIỂN THỊ CỦA ADMIN: Xem đầy đủ toàn bộ thông tin 9 cột và link vị trí bản đồ
   function renderAdmin() {
     const q = document.getElementById("adminSearch").value.toLowerCase();
     const body = document.getElementById("adminBody");
     body.innerHTML = "";
     
     students.filter(s => s.ten.toLowerCase().includes(q) || s.lop.toLowerCase().includes(q)).forEach(s => {
-      let locationCell = "❌";
+      let locationCell = "❌ Chưa lấy";
       if(s.location && s.location.trim() !== "" && s.location.trim() !== "❌") {
-        locationCell = `<a href="http://maps.google.com/?q=${s.location}" target="_blank" class="map-link">📍 ${s.location}</a>`;
+        locationCell = `<a href="http://maps.google.com/?q=${s.location}" target="_blank" class="map-link">📍 ${s.location} (Xem)</a>`;
       }
       
       body.innerHTML += `<tr>
-        <td>${s.sbd}</td>
+        <td>${s.sbd || "-"}</td>
         <td><b>${s.ten}</b></td>
         <td>${s.lop}</td>
-        <td>${s.sdtCaNhan}</td>
-        <td>${s.sdtBa}</td>
-        <td>${s.sdtMe}</td>
-        <td>${s.diemThiTN}</td>
+        <td>${s.sdtCaNhan || "-"}</td>
+        <td>${s.sdtBa || "-"}</td>
+        <td>${s.sdtMe || "-"}</td>
+        <td><b>${s.diemThiTN || "-"}</b></td>
         <td>${s.diaChi}</td>
         <td>${locationCell}</td>
       </tr>`;
     });
   }
 
-  async function uploadLocation() {
-    const s = students[document.getElementById("userSelect").value];
-    if (s.location && s.location.trim() !== "" && s.location.trim() !== "❌") {
-      alert("Lỗi: Bạn đã có dữ liệu định vị trên hệ thống!");
-      return location.reload();
-    }
-
-    document.getElementById("sendBtn").innerText = "⏳ Đang gửi...";
-    document.getElementById("sendBtn").disabled = true;
-    try {
-        await fetch(API_URL, { method: "POST", body: JSON.stringify({ ten: s.ten, location: myCoords, school: currentSchool }) });
-        alert("✅ Cảm ơn bạn " + s.ten + " đã cập nhật vị trí!");
-        location.reload();
-    } catch (e) {
-        alert("Có lỗi xảy ra, vui lòng thử lại!");
-        document.getElementById("sendBtn").innerText = "Bước 3: Xác nhận & Gửi";
-        document.getElementById("sendBtn").disabled = false;
-    }
-  }
-
   async function importExcel() {
     const file = document.getElementById("excelInput").files[0];
-    if(!file) return alert("Vui lòng chọn file!");
+    if(!file) return alert("Vui lòng chọn file mẫu Excel!");
     const btn = document.getElementById("importBtn");
-    btn.innerText = "⏳ Đang xử lý..."; btn.disabled = true;
+    btn.innerText = "⏳ Đang tải dữ liệu..."; btn.disabled = true;
 
     const reader = new FileReader();
     reader.onload = async (e) => {
@@ -416,7 +427,7 @@
       }));
       
       await fetch(API_URL, { method: "POST", body: JSON.stringify({ mode: "import", school: currentSchool, items: items }) });
-      alert("✅ Đã nạp thành công " + items.length + " thí sinh!");
+      alert("✅ Đã nạp thành công dữ liệu mới!");
       location.reload();
     };
     reader.readAsArrayBuffer(file);
