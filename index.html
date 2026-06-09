@@ -19,7 +19,7 @@
 
     .search-tag { background: #fffde7; border-left: 5px solid #fbc02d; padding: 8px; margin-bottom: 5px; font-size: 13px; font-weight: bold; }
     
-    /* Giao diện thẻ thông tin rút gọn cho Học sinh */
+    /* Giao diện thẻ */
     .results-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 15px; margin-bottom: 15px; }
     .tsmt-card { background: #e3f2fd; padding: 15px; border-radius: 12px; border: 1px solid #bbdefb; position: relative; }
     .tsmt-card.warning { background: #ffebee; border: 1px solid #ffcdd2; }
@@ -39,7 +39,7 @@
     .btn-admin-gate { background: none; color: #aaa; margin-top: 40px; font-size: 11px; border: 1px dashed #ccc; width: 100%; padding: 14px; }
     #map { height: 350px; border-radius: 10px; margin: 10px 0; border: 2px solid var(--blue); display: none; }
     
-    /* Bảng dữ liệu bảo mật của Admin */
+    /* Bảng admin */
     table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 15px; min-width: 1100px; }
     th { background: #f1f8ff; padding: 10px; text-align: left; border-bottom: 2px solid #ddd; white-space: nowrap; }
     td { padding: 10px; border-bottom: 1px solid #eee; }
@@ -74,13 +74,12 @@
     <div id="studentFormSection">
       <p class="device-note">⚠️ LƯU Ý: Vui lòng sử dụng ĐIỆN THOẠI và đứng TẠI NHÀ để lấy vị trí chính xác nhất.</p>
       
-      <div class="search-tag">🔍 Nhập tên bạn để tìm kiếm (Có thể tìm 2-3 người cùng lúc, cách nhau bằng dấu phẩy):</div>
-      <input type="text" id="userSearch" placeholder="Ví dụ: Nguyễn Văn A, Trần Thị B..." oninput="filterUserCards()">
+      <div class="search-tag">🔍 Nhập chính xác Họ tên của bạn để tìm kiếm:</div>
+      <input type="text" id="userSearch" placeholder="Ví dụ: Nguyễn Văn A..." oninput="filterUserCards()">
       
       <div id="loadingStatus" class="loading-text">⏳ Hệ thống đang nạp dữ liệu, vui lòng đợi...</div>
       
       <div id="resultsContainer" class="results-container"></div>
-
       <div id="map"></div>
     </div>
 
@@ -121,8 +120,8 @@
       </div>
     </div>
     
-    <div class="search-tag">🔎 Tìm nhanh thông tin trong danh sách tổng:</div>
-    <input type="text" id="adminSearch" placeholder="Tìm kiếm nhanh theo tên hoặc lớp..." oninput="renderAdmin()">
+    <div class="search-tag">🔎 Tìm kiếm nâng cao (Có thể tìm 2-3 người cùng lúc bằng cách gõ cách nhau bằng dấu phẩy. Ví dụ: Hải, Tuấn, 12A2, 260115):</div>
+    <input type="text" id="adminSearch" placeholder="Gõ tên, lớp hoặc các SBD cách nhau bằng dấu phẩy..." oninput="renderAdmin()">
     
     <div style="overflow-x:auto">
       <table>
@@ -204,44 +203,37 @@
       if(currentSchool === "NVL") {
         renderUserCards([]);
       }
-    } catch(e) { console.log("Lỗi tải kết nối..."); }
+    } catch(e) { console.log("Lỗi kết nối..."); }
   }
 
+  // SỬA ĐỔI: Học sinh tìm kiếm đơn giản, chỉ hiện duy nhất 1 người khớp nhất
   function filterUserCards() {
     clearTimeout(filterTimeout);
     filterTimeout = setTimeout(() => {
       const query = document.getElementById("userSearch").value.trim().toLowerCase();
-      if(query === "") {
+      if(query === "" || query.length < 2) { // Gõ từ 2 ký tự trở lên mới tìm để tăng bảo mật
         document.getElementById("resultsContainer").innerHTML = "";
         return;
       }
 
-      const keywords = query.split(",").map(k => k.trim()).filter(k => k !== "");
-      
-      let filtered = [];
-      if(keywords.length > 0) {
-        filtered = students.filter(s => {
-          return keywords.some(keyword => s.ten.toLowerCase().includes(keyword) || s.lop.toLowerCase().includes(keyword));
-        });
-      }
+      // Chỉ lọc chính xác theo chuỗi ký tự nhập vào (không tách dấu phẩy)
+      const filtered = students.filter(s => s.ten.toLowerCase().includes(query));
 
-      renderUserCards(filtered.slice(0, 10)); // Giới hạn hiển thị 10 người cùng lúc cho mượt
+      renderUserCards(filtered.slice(0, 1)); // CHỈ HIỂN THỊ DUY NHẤT 1 KẾT QUẢ
     }, 300);
   }
 
-  // HÀM HIỂN THỊ CHO HỌC SINH: Chỉ hiện Tên, Lớp, Địa chỉ. Giấu SBD, Điểm thi, SĐT và tọa độ cũ.
   function renderUserCards(list) {
     const container = document.getElementById("resultsContainer");
     container.innerHTML = "";
 
     if(list.length === 0 && document.getElementById("userSearch").value.trim() !== "") {
-      container.innerHTML = `<div class="loading-text" style="grid-column: 1/-1;">❌ Không tìm thấy thí sinh khớp với từ khóa!</div>`;
+      container.innerHTML = `<div class="loading-text" style="grid-column: 1/-1;">❌ Không tìm thấy thông tin thí sinh khớp hoàn toàn!</div>`;
       return;
     }
 
     list.forEach((s) => {
       const originalIndex = students.indexOf(s);
-      // Kiểm tra xem thí sinh này đã điền tọa độ GPS lên sheet hay chưa
       const isConfigured = s.location && s.location.trim() !== "" && s.location.trim() !== "❌";
       
       const card = document.createElement("div");
@@ -249,14 +241,12 @@
       card.id = `card-${originalIndex}`;
       
       if (isConfigured) {
-        // NẾU ĐÃ LẤY RỒI: Chỉ hiện thông báo đã lấy, không lộ thông tin nhạy cảm và tọa độ vị trí.
         card.innerHTML = `
           <div class="card-title">🏫 Lớp: ${s.lop}</div>
           <p style="margin: 8px 0;"><b>👤 Thí sinh:</b> <span style="font-weight:bold; color:#c62828;">${s.ten}</span></p>
           <p style="margin: 5px 0 0 0; font-weight:bold; color:#c62828; font-size:13px;">🛑 Hệ thống ghi nhận bạn ĐÃ ĐỊNH VỊ THÀNH CÔNG trước đó.</p>
         `;
       } else {
-        // NẾU CHƯA LẤY: Hiện form cho học sinh tự thao tác lấy GPS
         card.innerHTML = `
           <div class="card-title">🏫 Lớp: ${s.lop}</div>
           <p style="margin: 8px 0;"><b>👤 Thí sinh:</b> <span style="font-weight:bold; color:var(--blue);">${s.ten}</span></p>
@@ -266,8 +256,6 @@
         `;
       }
       container.appendChild(card);
-      
-      // Ghi nhận lịch sử ngầm để đẩy vào trang quản trị Admin
       logSearchHistory(s);
     });
   }
@@ -327,7 +315,7 @@
       
       document.getElementById(`sendBtn-${index}`).disabled = false;
     }, (error) => {
-        alert("Lỗi: Vui lòng cho phép quyền truy cập vị trí trên trình duyệt!");
+        alert("Lỗi: Vui lòng bật vị trí GPS trên thiết bị!");
     }, { enableHighAccuracy: true });
   }
 
@@ -377,13 +365,24 @@
     }
   }
 
-  // HÀM HIỂN THỊ CỦA ADMIN: Xem đầy đủ toàn bộ thông tin 9 cột và link vị trí bản đồ
+  // TÍNH NĂNG CỦA ADMIN: Cho phép gõ tìm kiếm 2, 3 người cùng lúc qua dấu phẩy theo Tên, Lớp hoặc SBD
   function renderAdmin() {
-    const q = document.getElementById("adminSearch").value.toLowerCase();
+    const q = document.getElementById("adminSearch").value.trim().toLowerCase();
     const body = document.getElementById("adminBody");
     body.innerHTML = "";
     
-    students.filter(s => s.ten.toLowerCase().includes(q) || s.lop.toLowerCase().includes(q)).forEach(s => {
+    // Tách các từ khóa tìm kiếm của Admin bằng dấu phẩy
+    const keywords = q.split(",").map(k => k.trim()).filter(k => k !== "");
+    
+    let filteredStudents = students;
+    if(keywords.length > 0) {
+      filteredStudents = students.filter(s => {
+        const sbdStr = s.sbd ? String(s.sbd).toLowerCase() : "";
+        return keywords.some(keyword => s.ten.toLowerCase().includes(keyword) || s.lop.toLowerCase().includes(keyword) || sbdStr.includes(keyword));
+      });
+    }
+
+    filteredStudents.forEach(s => {
       let locationCell = "❌ Chưa lấy";
       if(s.location && s.location.trim() !== "" && s.location.trim() !== "❌") {
         locationCell = `<a href="http://maps.google.com/?q=${s.location}" target="_blank" class="map-link">📍 ${s.location} (Xem)</a>`;
