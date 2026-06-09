@@ -43,8 +43,11 @@
     td { padding: 10px; border-bottom: 1px solid #eee; }
     
     .history-section { background: #f9f9f9; padding: 15px; border-radius: 10px; border: 1px solid #ddd; margin-bottom: 20px; }
-    .history-table { min-width: 100%; font-size: 11px; }
+    .history-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 10px; }
+    .history-table { min-width: 1100px; font-size: 12px; }
     .history-table th { background: #efebe9; }
+    .btn-clear-history { background: #c62828; color: white; padding: 6px 12px; font-size: 12px; border-radius: 6px; }
+    .btn-clear-history:hover { background: #b71c1c; }
 
     .footer { text-align: center; margin-top: 30px; padding: 15px; border-top: 1px solid #eee; color: #777; font-size: 13px; line-height: 1.6; }
     .device-note { color: #d32f2f; font-size: 12px; font-weight: bold; text-align: center; margin-bottom: 10px; }
@@ -88,6 +91,7 @@
     <button class="btn-admin-gate" onclick="showLogin()">🔐 QUẢN TRỊ VIÊN HỆ THỐNG</button>
   </div>
 
+  <!-- KHUNG ĐĂNG NHẬP ADMIN -->
   <div id="loginBox" style="display:none; text-align:center; max-width: 400px; margin: auto; padding: 20px; border: 1px solid #ccc; border-radius: 10px; background: #fff;">
     <h3 id="loginTitle">XÁC THỰC ADMIN</h3>
     <input type="password" id="adminPass" placeholder="Mật khẩu quản trị...">
@@ -95,6 +99,7 @@
     <button style="background:#666; color:white; margin-top:10px; width: 100%;" onclick="cancelLogin()">Quay lại</button>
   </div>
 
+  <!-- GIAO DIỆN ADMIN -->
   <div id="adminView" style="display:none;">
     <h3 id="adminViewTitle">📊 QUẢN LÝ DỮ LIỆU</h3>
     
@@ -104,15 +109,31 @@
       <button class="btn-excel" id="importBtn" onclick="importExcel()">Tải dữ liệu lên Google Sheets</button>
     </div>
 
+    <!-- KHU VỰC LỊCH SỬ TRA CỨU ĐÃ THÊM NÚT XÓA -->
     <div class="history-section">
-      <p style="margin:0 0 10px 0; font-weight: bold; color: #d84315;">🕒 Lịch sử thí sinh tra cứu form gần đây:</p>
-      <div style="max-height: 180px; overflow-y: auto;">
-        <table class="history-table" style="min-width: 100%;">
+      <div class="history-header">
+        <p style="margin:0; font-weight: bold; color: #2e7d32;">🕒 Lịch sử các thí sinh được Admin tra cứu gần đây:</p>
+        <button class="btn-clear-history" onclick="clearSearchHistory()">🗑️ Xóa toàn bộ lịch sử</button>
+      </div>
+      <div style="max-height: 250px; overflow-y: auto; overflow-x: auto;">
+        <table class="history-table">
           <thead>
-            <tr><th>Thời gian</th><th>Trường</th><th>Thí sinh tra cứu</th><th>Lớp</th></tr>
+            <tr>
+              <th>Thời gian tìm</th>
+              <th>Trường</th>
+              <th>SBD</th>
+              <th>Họ Tên</th>
+              <th>Lớp</th>
+              <th>SĐT Cá Nhân</th>
+              <th>SĐT Ba</th>
+              <th>SĐT Mẹ</th>
+              <th>Điểm thi TN</th>
+              <th>Địa chỉ</th>
+              <th>Vị trí (GPS)</th>
+            </tr>
           </thead>
           <tbody id="historyBody">
-            <tr><td colspan="4" style="text-align:center; color:#999;">Chưa có lượt tra cứu nào trong phiên này.</td></tr>
+            <tr><td colspan="11" style="text-align:center; color:#999;">Chưa thực hiện lượt tìm kiếm nào trong phiên này.</td></tr>
           </tbody>
         </table>
       </div>
@@ -163,7 +184,6 @@
   let selectedStudentIndex = null; 
   let searchHistory = []; 
   
-  // Biến kiểm soát Debounce tránh lag máy
   let userTimeout = null;
   let adminTimeout = null;
 
@@ -207,7 +227,6 @@
     } catch(e) { console.log("Lỗi kết nối..."); }
   }
 
-  // TỐI ƯU HỌC SINH: Tăng độ trễ phản hồi lên 400ms để gõ mượt mà không lag
   function filterUserCards() {
     clearTimeout(userTimeout);
     userTimeout = setTimeout(() => {
@@ -255,22 +274,42 @@
         `;
       }
       container.appendChild(card);
-      logSearchHistory(s);
     });
   }
 
-  function logSearchHistory(student) {
+  function logAdminSearchHistory(resultsList) {
+    if(resultsList.length === 0) return;
+    
     const now = new Date();
     const timeStr = now.getHours().toString().padStart(2, '0') + ":" + now.getMinutes().toString().padStart(2, '0') + ":" + now.getSeconds().toString().padStart(2, '0');
     const schoolNames = { NVL: "NVL", NCT: "NCT", THD: "THD" };
+
+    resultsList.forEach(student => {
+      const isExist = searchHistory.some(h => h.ten === student.ten && h.lop === student.lop);
+      if(!isExist) {
+        searchHistory.unshift({
+          time: timeStr,
+          school: schoolNames[currentSchool],
+          sbd: student.sbd || "-",
+          ten: student.ten,
+          lop: student.lop,
+          sdtCaNhan: student.sdtCaNhan || "-",
+          sdtBa: student.sdtBa || "-",
+          sdtMe: student.sdtMe || "-",
+          diemThiTN: student.diemThiTN || "-",
+          diaChi: student.diaChi || "-",
+          location: student.location || "❌ Chưa lấy"
+        });
+      }
+    });
     
-    if(searchHistory.length === 0 || searchHistory[0].ten !== student.ten) {
-      searchHistory.unshift({
-        time: timeStr,
-        school: schoolNames[currentSchool],
-        ten: student.ten,
-        lop: student.lop
-      });
+    renderHistory();
+  }
+
+  // HÀM MỚI THÊM: Dùng để xóa sạch mảng lịch sử khi Admin nhấn nút
+  function clearSearchHistory() {
+    if(confirm("Bạn có chắc chắn muốn xóa toàn bộ lịch sử tìm kiếm hiện tại không?")) {
+      searchHistory = [];
       renderHistory();
     }
   }
@@ -279,12 +318,29 @@
     const hBody = document.getElementById("historyBody");
     if(!hBody) return;
     if(searchHistory.length === 0) {
-      hBody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:#999;">Chưa có lượt tra cứu nào trong phiên này.</td></tr>`;
+      hBody.innerHTML = `<tr><td colspan="11" style="text-align:center; color:#999;">Chưa thực hiện lượt tìm kiếm nào trong phiên này.</td></tr>`;
       return;
     }
     hBody.innerHTML = "";
-    searchHistory.slice(0, 15).forEach(h => { 
-      hBody.innerHTML += `<tr><td>${h.time}</td><td><b>${h.school}</b></td><td>${h.ten}</td><td>${h.lop}</td></tr>`;
+    searchHistory.slice(0, 40).forEach(h => { 
+      let locCell = "❌ Chưa lấy";
+      if(h.location && h.location !== "❌ Chưa lấy" && h.location.trim() !== "❌") {
+        locCell = `<a href="http://googleusercontent.com/maps.google.com/?q=${h.location}" target="_blank" class="map-link">📍 ${h.location}</a>`;
+      }
+      
+      hBody.innerHTML += `<tr>
+        <td>${h.time}</td>
+        <td><b>${h.school}</b></td>
+        <td>${h.sbd}</td>
+        <td><b>${h.ten}</b></td>
+        <td>${h.lop}</td>
+        <td>${h.sdtCaNhan}</td>
+        <td>${h.sdtBa}</td>
+        <td>${h.sdtMe}</td>
+        <td><b>${h.diemThiTN}</b></td>
+        <td>${h.diaChi}</td>
+        <td>${locCell}</td>
+      </tr>`;
     });
   }
 
@@ -358,12 +414,12 @@
       const schoolNames = { NVL: "THPT Nguyễn Văn Linh", NCT: "THPT Nguyễn Công Trứ", THD: "THCS Trần Hưng Đạo" };
       document.getElementById("adminViewTitle").innerText = `📊 QUẢN LÝ DỮ LIỆU - ${schoolNames[currentSchool].toUpperCase()}`;
       renderAdminRealtime();
+      renderHistory();
     } else {
       alert("Mật khẩu Quản trị viên không đúng!");
     }
   }
 
-  // TỐI ƯU ADMIN: Tạo luồng Debounce riêng biệt để Admin gõ danh sách dài không bị đứng trình duyệt
   function renderAdmin() {
     clearTimeout(adminTimeout);
     adminTimeout = setTimeout(() => {
@@ -384,9 +440,10 @@
         const sbdStr = s.sbd ? String(s.sbd).toLowerCase() : "";
         return keywords.some(keyword => s.ten.toLowerCase().includes(keyword) || s.lop.toLowerCase().includes(keyword) || sbdStr.includes(keyword));
       });
+      
+      logAdminSearchHistory(filteredStudents);
     }
 
-    // Tối ưu UI: Chỉ vẽ tối đa 50 dòng kết quả đầu tiên của admin nếu đang tìm kiếm chung để tránh sập trình duyệt
     const viewList = keywords.length === 0 ? filteredStudents.slice(0, 30) : filteredStudents;
 
     viewList.forEach(s => {
