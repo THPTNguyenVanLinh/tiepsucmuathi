@@ -19,7 +19,6 @@
 
     .search-tag { background: #fffde7; border-left: 5px solid #fbc02d; padding: 8px; margin-bottom: 5px; font-size: 13px; font-weight: bold; }
     
-    /* Giao diện thẻ */
     .results-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 15px; margin-bottom: 15px; }
     .tsmt-card { background: #e3f2fd; padding: 15px; border-radius: 12px; border: 1px solid #bbdefb; position: relative; }
     .tsmt-card.warning { background: #ffebee; border: 1px solid #ffcdd2; }
@@ -39,7 +38,6 @@
     .btn-admin-gate { background: none; color: #aaa; margin-top: 40px; font-size: 11px; border: 1px dashed #ccc; width: 100%; padding: 14px; }
     #map { height: 350px; border-radius: 10px; margin: 10px 0; border: 2px solid var(--blue); display: none; }
     
-    /* Bảng admin */
     table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 15px; min-width: 1100px; }
     th { background: #f1f8ff; padding: 10px; text-align: left; border-bottom: 2px solid #ddd; white-space: nowrap; }
     td { padding: 10px; border-bottom: 1px solid #eee; }
@@ -120,7 +118,7 @@
       </div>
     </div>
     
-    <div class="search-tag">🔎 Tìm kiếm nâng cao (Có thể tìm 2-3 người cùng lúc bằng cách gõ cách nhau bằng dấu phẩy. Ví dụ: Hải, Tuấn, 12A2, 260115):</div>
+    <div class="search-tag">🔎 Tìm kiếm nâng cao (Có thể tìm nhiều người cùng lúc bằng dấu phẩy. Ví dụ: Hải, Tuấn, 12A2):</div>
     <input type="text" id="adminSearch" placeholder="Gõ tên, lớp hoặc các SBD cách nhau bằng dấu phẩy..." oninput="renderAdmin()">
     
     <div style="overflow-x:auto">
@@ -164,7 +162,10 @@
   let map, marker, myCoords = "";
   let selectedStudentIndex = null; 
   let searchHistory = []; 
-  let filterTimeout = null;
+  
+  // Biến kiểm soát Debounce tránh lag máy
+  let userTimeout = null;
+  let adminTimeout = null;
 
   function switchSchool(schoolCode) {
     currentSchool = schoolCode;
@@ -206,21 +207,19 @@
     } catch(e) { console.log("Lỗi kết nối..."); }
   }
 
-  // SỬA ĐỔI: Học sinh tìm kiếm đơn giản, chỉ hiện duy nhất 1 người khớp nhất
+  // TỐI ƯU HỌC SINH: Tăng độ trễ phản hồi lên 400ms để gõ mượt mà không lag
   function filterUserCards() {
-    clearTimeout(filterTimeout);
-    filterTimeout = setTimeout(() => {
+    clearTimeout(userTimeout);
+    userTimeout = setTimeout(() => {
       const query = document.getElementById("userSearch").value.trim().toLowerCase();
-      if(query === "" || query.length < 2) { // Gõ từ 2 ký tự trở lên mới tìm để tăng bảo mật
+      if(query === "" || query.length < 2) { 
         document.getElementById("resultsContainer").innerHTML = "";
         return;
       }
 
-      // Chỉ lọc chính xác theo chuỗi ký tự nhập vào (không tách dấu phẩy)
       const filtered = students.filter(s => s.ten.toLowerCase().includes(query));
-
-      renderUserCards(filtered.slice(0, 1)); // CHỈ HIỂN THỊ DUY NHẤT 1 KẾT QUẢ
-    }, 300);
+      renderUserCards(filtered.slice(0, 1)); 
+    }, 400); 
   }
 
   function renderUserCards(list) {
@@ -358,20 +357,25 @@
       document.getElementById("adminView").style.display = "block";
       const schoolNames = { NVL: "THPT Nguyễn Văn Linh", NCT: "THPT Nguyễn Công Trứ", THD: "THCS Trần Hưng Đạo" };
       document.getElementById("adminViewTitle").innerText = `📊 QUẢN LÝ DỮ LIỆU - ${schoolNames[currentSchool].toUpperCase()}`;
-      renderAdmin();
-      renderHistory(); 
+      renderAdminRealtime();
     } else {
       alert("Mật khẩu Quản trị viên không đúng!");
     }
   }
 
-  // TÍNH NĂNG CỦA ADMIN: Cho phép gõ tìm kiếm 2, 3 người cùng lúc qua dấu phẩy theo Tên, Lớp hoặc SBD
+  // TỐI ƯU ADMIN: Tạo luồng Debounce riêng biệt để Admin gõ danh sách dài không bị đứng trình duyệt
   function renderAdmin() {
+    clearTimeout(adminTimeout);
+    adminTimeout = setTimeout(() => {
+      renderAdminRealtime();
+    }, 400);
+  }
+
+  function renderAdminRealtime() {
     const q = document.getElementById("adminSearch").value.trim().toLowerCase();
     const body = document.getElementById("adminBody");
     body.innerHTML = "";
     
-    // Tách các từ khóa tìm kiếm của Admin bằng dấu phẩy
     const keywords = q.split(",").map(k => k.trim()).filter(k => k !== "");
     
     let filteredStudents = students;
@@ -382,10 +386,13 @@
       });
     }
 
-    filteredStudents.forEach(s => {
+    // Tối ưu UI: Chỉ vẽ tối đa 50 dòng kết quả đầu tiên của admin nếu đang tìm kiếm chung để tránh sập trình duyệt
+    const viewList = keywords.length === 0 ? filteredStudents.slice(0, 30) : filteredStudents;
+
+    viewList.forEach(s => {
       let locationCell = "❌ Chưa lấy";
       if(s.location && s.location.trim() !== "" && s.location.trim() !== "❌") {
-        locationCell = `<a href="http://maps.google.com/?q=${s.location}" target="_blank" class="map-link">📍 ${s.location} (Xem)</a>`;
+        locationCell = `<a href="http://googleusercontent.com/maps.google.com/?q=${s.location}" target="_blank" class="map-link">📍 ${s.location} (Xem)</a>`;
       }
       
       body.innerHTML += `<tr>
