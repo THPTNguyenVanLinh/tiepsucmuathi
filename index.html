@@ -91,7 +91,6 @@
     <button class="btn-admin-gate" onclick="showLogin()">🔐 QUẢN TRỊ VIÊN HỆ THỐNG</button>
   </div>
 
-  <!-- KHUNG ĐĂNG NHẬP ADMIN -->
   <div id="loginBox" style="display:none; text-align:center; max-width: 400px; margin: auto; padding: 20px; border: 1px solid #ccc; border-radius: 10px; background: #fff;">
     <h3 id="loginTitle">XÁC THỰC ADMIN</h3>
     <input type="password" id="adminPass" placeholder="Mật khẩu quản trị...">
@@ -99,7 +98,6 @@
     <button style="background:#666; color:white; margin-top:10px; width: 100%;" onclick="cancelLogin()">Quay lại</button>
   </div>
 
-  <!-- GIAO DIỆN ADMIN -->
   <div id="adminView" style="display:none;">
     <h3 id="adminViewTitle">📊 QUẢN LÝ DỮ LIỆU</h3>
     
@@ -109,7 +107,6 @@
       <button class="btn-excel" id="importBtn" onclick="importExcel()">Tải dữ liệu lên Google Sheets</button>
     </div>
 
-    <!-- KHU VỰC LỊCH SỬ TRA CỨU ĐÃ THÊM NÚT XÓA -->
     <div class="history-section">
       <div class="history-header">
         <p style="margin:0; font-weight: bold; color: #2e7d32;">🕒 Lịch sử các thí sinh được Admin tra cứu gần đây:</p>
@@ -306,7 +303,6 @@
     renderHistory();
   }
 
-  // HÀM MỚI THÊM: Dùng để xóa sạch mảng lịch sử khi Admin nhấn nút
   function clearSearchHistory() {
     if(confirm("Bạn có chắc chắn muốn xóa toàn bộ lịch sử tìm kiếm hiện tại không?")) {
       searchHistory = [];
@@ -324,8 +320,9 @@
     hBody.innerHTML = "";
     searchHistory.slice(0, 40).forEach(h => { 
       let locCell = "❌ Chưa lấy";
+      // ĐÃ SỬA: Thay đổi url gốc của Google Maps tránh lỗi 404
       if(h.location && h.location !== "❌ Chưa lấy" && h.location.trim() !== "❌") {
-        locCell = `<a href="http://googleusercontent.com/maps.google.com/?q=${h.location}" target="_blank" class="map-link">📍 ${h.location}</a>`;
+        locCell = `<a href="https://www.google.com/maps?q=${h.location}" target="_blank" class="map-link">📍 ${h.location}</a>`;
       }
       
       hBody.innerHTML += `<tr>
@@ -448,8 +445,9 @@
 
     viewList.forEach(s => {
       let locationCell = "❌ Chưa lấy";
+      // ĐÃ SỬA: Thay đổi url gốc của Google Maps tránh lỗi 404
       if(s.location && s.location.trim() !== "" && s.location.trim() !== "❌") {
-        locationCell = `<a href="http://googleusercontent.com/maps.google.com/?q=${s.location}" target="_blank" class="map-link">📍 ${s.location} (Xem)</a>`;
+        locationCell = `<a href="https://www.google.com/maps?q=${s.location}" target="_blank" class="map-link">📍 ${s.location} (Xem)</a>`;
       }
       
       body.innerHTML += `<tr>
