@@ -194,8 +194,10 @@
 
     document.getElementById("userSearch").value = "";
     document.getElementById("resultsContainer").innerHTML = "";
-    document.getElementById("loadingStatus").style.display = "block";
-    if(map) { document.getElementById("map").style.display = "none"; }
+    
+    if(map) { 
+      document.getElementById("map").style.display = "none"; 
+    }
     myCoords = "";
     selectedStudentIndex = null;
 
@@ -215,27 +217,41 @@
 
   async function fetchData() {
     try {
+      document.getElementById("loadingStatus").style.display = "block";
+      document.getElementById("loadingStatus").innerText = "⏳ Hệ thống đang nạp dữ liệu, vui lòng đợi...";
+      
       const res = await fetch(API_URL);
-      students = await res.json();
+      const data = await res.json();
+      
+      students = Array.isArray(data) ? data : [];
       document.getElementById("loadingStatus").style.display = "none";
-      if(currentSchool === "NVL") {
-        renderUserCards([]);
-      }
-    } catch(e) { console.log("Lỗi kết nối..."); }
+      document.getElementById("resultsContainer").innerHTML = "";
+    } catch(e) { 
+      console.log("Lỗi kết nối...", e); 
+      document.getElementById("loadingStatus").innerText = "❌ Lỗi nạp dữ liệu, vui lòng làm mới trang!";
+    }
   }
 
   function filterUserCards() {
     clearTimeout(userTimeout);
     userTimeout = setTimeout(() => {
       const query = document.getElementById("userSearch").value.trim().toLowerCase();
-      if(query === "" || query.length < 2) { 
+      
+      if(query === "") { 
         document.getElementById("resultsContainer").innerHTML = "";
         return;
       }
 
-      const filtered = students.filter(s => s.ten.toLowerCase().includes(query));
-      renderUserCards(filtered.slice(0, 1)); 
-    }, 400); 
+      // SỬA LỖI: Lọc chính xác theo tên và khớp mã trường (nếu API có hỗ trợ key school/truong)
+      const filtered = students.filter(s => {
+        const matchName = s.ten && s.ten.toLowerCase().includes(query);
+        const matchSchool = s.school ? (s.school === currentSchool) : true;
+        return matchName && matchSchool;
+      });
+      
+      // Cho phép hiển thị tối đa 5 người trùng hoặc gần đúng tên để tăng trải nghiệm tìm kiếm
+      renderUserCards(filtered.slice(0, 5)); 
+    }, 300); 
   }
 
   function renderUserCards(list) {
@@ -243,7 +259,7 @@
     container.innerHTML = "";
 
     if(list.length === 0 && document.getElementById("userSearch").value.trim() !== "") {
-      container.innerHTML = `<div class="loading-text" style="grid-column: 1/-1;">❌ Không tìm thấy thông tin thí sinh khớp hoàn toàn!</div>`;
+      container.innerHTML = `<div class="loading-text" style="grid-column: 1/-1;">❌ Không tìm thấy thông tin thí sinh tương ứng!</div>`;
       return;
     }
 
@@ -320,9 +336,9 @@
     hBody.innerHTML = "";
     searchHistory.slice(0, 40).forEach(h => { 
       let locCell = "❌ Chưa lấy";
-      // ĐÃ SỬA: Thay đổi url gốc của Google Maps tránh lỗi 404
+      // SỬA LỖI: Fix lỗi hiển thị chuỗi String template của link bản đồ
       if(h.location && h.location !== "❌ Chưa lấy" && h.location.trim() !== "❌") {
-        locCell = `<a href="https://www.google.com/maps?q=${h.location}" target="_blank" class="map-link">📍 ${h.location}</a>`;
+        locCell = `<a href="https://maps.google.com/?q=${h.location}" target="_blank" class="map-link">📍 ${h.location}</a>`;
       }
       
       hBody.innerHTML += `<tr>
@@ -445,9 +461,9 @@
 
     viewList.forEach(s => {
       let locationCell = "❌ Chưa lấy";
-      // ĐÃ SỬA: Thay đổi url gốc của Google Maps tránh lỗi 404
+      // SỬA LỖI: Sửa link Google Maps chuẩn hóa từ tọa độ (Ví dụ: 10.123456,105.123456) sang định dạng link click trực tiếp được
       if(s.location && s.location.trim() !== "" && s.location.trim() !== "❌") {
-        locationCell = `<a href="https://www.google.com/maps?q=${s.location}" target="_blank" class="map-link">📍 ${s.location} (Xem)</a>`;
+        locationCell = `<a href="https://maps.google.com/?q=${s.location}" target="_blank" class="map-link">📍 ${s.location} (Xem)</a>`;
       }
       
       body.innerHTML += `<tr>
