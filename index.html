@@ -27,7 +27,6 @@
     
     h3 { color: var(--blue); text-align: center; margin-top: 0; text-transform: uppercase; }
     
-    /* TỐI ƯU THANH NHẬP LIỆU: Thêm transition, tăng tốc phần cứng, chống lag khi gõ nhanh */
     input { 
       width: 100%; 
       padding: 12px; 
@@ -264,7 +263,6 @@
 
   function filterUserCards() {
     clearTimeout(userTimeout);
-    // TỐI ƯU TIMEOUT: Giảm từ 300ms xuống 150ms giúp phản hồi kết quả tìm kiếm ngay lập tức khi dừng gõ
     userTimeout = setTimeout(() => {
       const query = document.getElementById("userSearch").value.trim().toLowerCase();
       
@@ -443,7 +441,6 @@
     const schoolNames = { NVL: "THPT Nguyễn Văn Linh", NCT: "THPT Nguyễn Công Trứ", THD: "THCS Trần Hưng Đạo" };
     document.getElementById("loginTitle").innerText = `XÁC THỰC ADMIN - ${schoolNames[currentSchool].toUpperCase()}`;
     
-    // Tự động focus vào ô mật khẩu ngay khi mở lên một cách mượt mà
     setTimeout(() => { document.getElementById("adminPass").focus(); }, 100);
   }
 
@@ -472,7 +469,7 @@
     clearTimeout(adminTimeout);
     adminTimeout = setTimeout(() => {
       renderAdminRealtime();
-    }, 150); // Tối ưu giảm lag cho ô tìm kiếm Admin
+    }, 200); // Debounce tăng lên 200ms giúp giảm tải tối đa cho trình duyệt
   }
 
   function renderAdminRealtime() {
@@ -489,18 +486,24 @@
         return keywords.some(keyword => s.ten.toLowerCase().includes(keyword) || s.lop.toLowerCase().includes(keyword) || sbdStr.includes(keyword));
       });
       
-      logAdminSearchHistory(filteredStudents);
+      // CHỈ LƯU LỊCH SỬ KHI TÌM RA ĐÍCH DANH 1 THÍ SINH (Tránh lag khi đang gõ dở dang)
+      if(filteredStudents.length === 1) {
+        logAdminSearchHistory(filteredStudents);
+      }
     }
 
-    const viewList = keywords.length === 0 ? filteredStudents.slice(0, 30) : filteredStudents;
+    // Nếu không tìm kiếm, giới hạn render tối đa 20 dòng thay vì 30 dòng để tăng tốc độ hiển thị
+    const viewList = keywords.length === 0 ? filteredStudents.slice(0, 20) : filteredStudents;
 
+    // Sử dụng kỹ thuật nối chuỗi (String Accumulation) rồi chèn innerHTML một lần duy nhất
+    let htmlContent = "";
     viewList.forEach(s => {
       let locationCell = "❌ Chưa lấy";
       if(s.location && s.location.trim() !== "" && s.location.trim() !== "❌") {
         locationCell = `<a href="https://maps.google.com/?q=${s.location}" target="_blank" class="map-link">📍 ${s.location} (Xem)</a>`;
       }
       
-      body.innerHTML += `<tr>
+      htmlContent += `<tr>
         <td>${s.sbd || "-"}</td>
         <td><b>${s.ten}</b></td>
         <td>${s.lop}</td>
@@ -512,6 +515,8 @@
         <td>${locationCell}</td>
       </tr>`;
     });
+    
+    body.innerHTML = htmlContent;
   }
 
   async function importExcel() {
