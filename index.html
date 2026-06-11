@@ -26,7 +26,25 @@
     .card-title { font-size: 15px; color: #01579b; margin-top: 0; border-bottom: 1px dashed #b3e5fc; padding-bottom: 5px; font-weight: bold; }
     
     h3 { color: var(--blue); text-align: center; margin-top: 0; text-transform: uppercase; }
-    input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px; margin-bottom: 10px; box-sizing: border-box; font-size: 16px; }
+    
+    /* TỐI ƯU THANH NHẬP LIỆU: Thêm transition, tăng tốc phần cứng, chống lag khi gõ nhanh */
+    input { 
+      width: 100%; 
+      padding: 12px; 
+      border: 1.5px solid #ccc; 
+      border-radius: 8px; 
+      margin-bottom: 10px; 
+      box-sizing: border-box; 
+      font-size: 16px; 
+      outline: none;
+      transition: border-color 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      will-change: border-color, box-shadow;
+    }
+    input:focus {
+      border-color: var(--blue);
+      box-shadow: 0 0 0 3px rgba(2, 136, 209, 0.15);
+    }
+    
     button { padding: 10px 14px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.2s; font-size: 14px; }
     
     .btn-gps { background: var(--blue); color: white; width: 100%; margin-top: 8px; }
@@ -180,7 +198,6 @@
   let map, marker, myCoords = "";
   let selectedStudentIndex = null; 
   
-  // THAY ĐỔI: Tách lịch sử thành 3 phần riêng biệt cho 3 trường
   let searchHistory = {
     NVL: [],
     NCT: [],
@@ -218,7 +235,6 @@
       document.getElementById("adminOnlyNotice").style.display = "block";
     }
 
-    // Nếu đang ở màn hình Admin, tự động chuyển đổi bảng dữ liệu và lịch sử của trường đó
     if(document.getElementById("adminView").style.display === "block") {
       document.getElementById("adminViewTitle").innerText = `📊 QUẢN LÝ DỮ LIỆU - ${schoolNames[currentSchool].toUpperCase()}`;
       document.getElementById("adminSearch").value = "";
@@ -248,6 +264,7 @@
 
   function filterUserCards() {
     clearTimeout(userTimeout);
+    // TỐI ƯU TIMEOUT: Giảm từ 300ms xuống 150ms giúp phản hồi kết quả tìm kiếm ngay lập tức khi dừng gõ
     userTimeout = setTimeout(() => {
       const query = document.getElementById("userSearch").value.trim().toLowerCase();
       
@@ -263,7 +280,7 @@
       });
       
       renderUserCards(filtered.slice(0, 5)); 
-    }, 300); 
+    }, 150); 
   }
 
   function renderUserCards(list) {
@@ -310,10 +327,8 @@
     const schoolNames = { NVL: "NVL", NCT: "NCT", THD: "THD" };
 
     resultsList.forEach(student => {
-      // THAY ĐỔI: Kiểm tra trùng lặp trong mảng lịch sử của TRƯỜNG HIỆN TẠI
       const isExist = searchHistory[currentSchool].some(h => h.ten === student.ten && h.lop === student.lop);
       if(!isExist) {
-        // THAY ĐỔI: Thêm vào đầu mảng lịch sử của TRƯỜNG HIỆN TẠI
         searchHistory[currentSchool].unshift({
           time: timeStr,
           school: schoolNames[currentSchool],
@@ -336,7 +351,6 @@
   function clearSearchHistory() {
     const schoolNames = { NVL: "THPT Nguyễn Văn Linh", NCT: "THPT Nguyễn Công Trứ", THD: "THCS Trần Hưng Đạo" };
     if(confirm(`Bạn có chắc chắn muốn xóa lịch sử tìm kiếm riêng của trường ${schoolNames[currentSchool]} không?`)) {
-      // THAY ĐỔI: Chỉ xóa sạch mảng của trường hiện tại
       searchHistory[currentSchool] = [];
       renderHistory();
     }
@@ -346,7 +360,6 @@
     const hBody = document.getElementById("historyBody");
     if(!hBody) return;
     
-    // THAY ĐỔI: Lấy danh sách lịch sử của trường hiện tại ra để render
     const currentHistory = searchHistory[currentSchool];
 
     if(currentHistory.length === 0) {
@@ -429,6 +442,9 @@
     document.getElementById("loginBox").style.display = "block"; 
     const schoolNames = { NVL: "THPT Nguyễn Văn Linh", NCT: "THPT Nguyễn Công Trứ", THD: "THCS Trần Hưng Đạo" };
     document.getElementById("loginTitle").innerText = `XÁC THỰC ADMIN - ${schoolNames[currentSchool].toUpperCase()}`;
+    
+    // Tự động focus vào ô mật khẩu ngay khi mở lên một cách mượt mà
+    setTimeout(() => { document.getElementById("adminPass").focus(); }, 100);
   }
 
   function cancelLogin() {
@@ -456,7 +472,7 @@
     clearTimeout(adminTimeout);
     adminTimeout = setTimeout(() => {
       renderAdminRealtime();
-    }, 400);
+    }, 150); // Tối ưu giảm lag cho ô tìm kiếm Admin
   }
 
   function renderAdminRealtime() {
